@@ -154,6 +154,13 @@
         const responsables = await responsablesRes.json();
         const transportes = await transporteRes.json();
 
+        [obraSelect, personalSelect, responsableSelect, transporteSelect].forEach(sel => {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "-- Seleccione --";
+          sel.appendChild(opt);
+        });
+
         obras.forEach(o => {
           const opt = document.createElement("option");
           opt.value = o.id;
