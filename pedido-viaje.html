@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido de Viaje - Grupo Idea</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #2b375a;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2b375a;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    h2 {
+      color: #d61c42;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 6px;
+      margin-top: 3px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    button {
+      background-color: #2b375a;
+      color: white;
+      padding: 8px 12px;
+      margin-top: 15px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background-color: #d61c42;
+    }
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 4px 8px;
+      text-align: left;
+      font-size: 13px;
+    }
+    .inline-fields {
+      display: flex;
+      gap: 10px;
+    }
+    .inline-fields > div {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Grupo Idea - Pedido de Viaje</h1>
+  </header>
+  <div class="container">
+    <h2>Formulario de Pedido</h2>
+    <form id="formViaje">
+      <div class="inline-fields">
+        <div>
+          <label for="dias">Días a viajar:</label>
+          <input type="number" id="dias" name="dias" required>
+        </div>
+        <div>
+          <label for="fechaDesde">Desde:</label>
+          <input type="date" id="fechaDesde" name="fechaDesde" required>
+        </div>
+        <div>
+          <label for="fechaHasta">Hasta:</label>
+          <input type="date" id="fechaHasta" name="fechaHasta" required>
+        </div>
+      </div>
+
+      <label for="obraSelect">Obras a visitar:</label>
+      <select id="obraSelect"></select>
+      <!--<button type="button" onclick="agregarObra()">Agregar Obra</button>-->
+      <table id="tablaObras">
+        <thead><tr><th>Obra</th><th>Acción</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <label for="personalSelect">Personal que viaja:</label>
+      <select id="personalSelect"></select>
+      <!--<button type="button" onclick="agregarPersonal()">Agregar Personal</button>-->
+      <table id="tablaPersonal">
+        <thead><tr><th>Nombre</th><th>Acción</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <label for="transporte">Transporte:</label>
+      <select id="transporte" name="transporte" required></select>
+
+      <label for="monto">Monto solicitado:</label>
+      <input type="number" id="monto" name="monto" required>
+
+      <label for="responsable">Responsable de rendición:</label>
+      <select id="responsable" name="responsable" required></select>
+
+      <label for="descripcion">Descripción del viaje:</label>
+      <textarea id="descripcion" name="descripcion" required></textarea>
+
+      <button type="submit">Enviar Pedido</button>
+    </form>
+  </div>
+
+  <script>
+    const obraSelect = document.getElementById("obraSelect");
+    const personalSelect = document.getElementById("personalSelect");
+    const responsableSelect = document.getElementById("responsable");
+    const transporteSelect = document.getElementById("transporte");
+    const tablaObras = document.getElementById("tablaObras").querySelector("tbody");
+    const tablaPersonal = document.getElementById("tablaPersonal").querySelector("tbody");
+
+    const obrasSeleccionadas = [];
+    const personalSeleccionado = [];
+
+    async function cargarDatos() {
+      try {
+        const [obrasRes, personalRes, responsablesRes, transporteRes] = await Promise.all([
+          fetch("https://grupo-idea-backend-1.onrender.com/api/obras"),
+          fetch("https://grupo-idea-backend-1.onrender.com/api/personal"),
+          fetch("https://grupo-idea-backend-1.onrender.com/api/usuarios"),
+          fetch("https://grupo-idea-backend-1.onrender.com/api/transportes")
+        ]);
+
+        const obras = await obrasRes.json();
+        const personas = await personalRes.json();
+        const responsables = await responsablesRes.json();
+        const transportes = await transporteRes.json();
+
+        obras.forEach(o => {
+          const opt = document.createElement("option");
+          opt.value = o.id;
+          opt.textContent = o.nombre;
+          obraSelect.appendChild(opt);
+        });
+
+        personas.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.nombre;
+          personalSelect.appendChild(opt);
+        });
+
+        responsables.forEach(r => {
+          const opt = document.createElement("option");
+          opt.value = r.id;
+          opt.textContent = r.nombre;
+          responsableSelect.appendChild(opt);
+        });
+
+        transportes.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.nombre;
+          transporteSelect.appendChild(opt);
+        });
+
+        const optPasaje = document.createElement("option");
+        optPasaje.value = "pasaje";
+        optPasaje.textContent = "Comprar pasaje";
+        transporteSelect.appendChild(optPasaje);
+
+      } catch (err) {
+        alert("Error cargando datos: " + err);
+      }
+    }
+    cargarDatos();
+
+    function actualizarDescripcionAuto() {
+      if (obrasSeleccionadas.length > 0 && document.getElementById("fechaDesde").value) {
+        const nombreObra = obrasSeleccionadas[0].nombre;
+        const fechaSalida = document.getElementById("fechaDesde").value;
+        document.getElementById("descripcion").value = `Viaje a ${nombreObra} el ${fechaSalida}`;
+      }
+    }
+
+
+    function agregarObra() {
+      const id = obraSelect.value;
+      const nombre = obraSelect.options[obraSelect.selectedIndex].text;
+      if (!obrasSeleccionadas.some(o => o.id === id)) {
+        obrasSeleccionadas.push({ id, nombre });
+        const row = tablaObras.insertRow();
+        row.innerHTML = `<td>${nombre}</td><td><button type="button" onclick="eliminarFila(this, 'obras')">Quitar</button></td>`;
+        actualizarDescripcionAuto();
+      }
+    }
+    obraSelect.addEventListener("change", function() {
+      if (obraSelect.value) {
+        agregarObra();
+        // Opcional: vuelve a dejar el select en blanco
+        obraSelect.selectedIndex = 0;
+      }
+    });
+        
+    function agregarPersonal() {
+      const id = personalSelect.value;
+      const nombre = personalSelect.options[personalSelect.selectedIndex].text;
+      if (!personalSeleccionado.some(p => p.id === id)) {
+        personalSeleccionado.push({ id, nombre });
+        const row = tablaPersonal.insertRow();
+        row.innerHTML = `<td>${nombre}</td><td><button type="button" onclick="eliminarFila(this, 'personal')">Quitar</button></td>`;
+      }
+    }
+
+    personalSelect.addEventListener("change", function() {
+      if (personalSelect.value) {
+        agregarPersonal();
+        // Opcional: vuelve a dejar el select en blanco
+        personalSelect.selectedIndex = 0;
+      }
+    });
+    function eliminarFila(btn, tipo) {
+      const row = btn.parentNode.parentNode;
+      const nombre = row.cells[0].textContent;
+      row.remove();
+      if (tipo === 'obras') {
+        const idx = obrasSeleccionadas.findIndex(o => o.nombre === nombre);
+        if (idx > -1) obrasSeleccionadas.splice(idx, 1);
+      } else {
+        const idx = personalSeleccionado.findIndex(p => p.nombre === nombre);
+        if (idx > -1) personalSeleccionado.splice(idx, 1);
+      }
+    }
+
+    document.getElementById("formViaje").addEventListener("submit", async e => {
+      e.preventDefault();
+    const datos = {
+      dias: Number(document.getElementById("dias").value),
+      fechaDesde: document.getElementById("fechaDesde").value,
+      fechaHasta: document.getElementById("fechaHasta").value,
+      obras: obrasSeleccionadas.map(o => o.id),
+      personal: personalSeleccionado.map(p => p.id),
+      IdTransporte: Number(transporteSelect.value),
+      monto: Number(document.getElementById("monto").value),
+      IdResponsableRendicion: Number(responsableSelect.value),
+      descripcion: document.getElementById("descripcion").value,
+      IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario"))
+    };
+    
+      try {
+        const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/pedidos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datos)
+        });
+        const json = await res.json();
+        if (json.ok) {
+          alert("Pedido enviado. Número de pedido: " + json.idPedido);
+        } else {
+          alert("Error al guardar el pedido: " + (json.error || JSON.stringify(json)));
+        }
+      } catch (err) {
+        alert("Error de conexión: " + err);
+      }
+    });
+
+  </script>
+</body>
+</html>

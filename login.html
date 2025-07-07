@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingreso al Sistema - Grupo Idea</title>
+ <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #2b375a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-box {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    img {
+      max-height: 100px;
+      margin-bottom: 0px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #2b375a;
+      color: white;
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #d61c42;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <img src="LogoIdea.png" alt="Grupo Idea">
+    <h2>Ingreso al Sistema</h2>
+    <form id="loginForm">
+      <div class="mb-3">
+        <label for="usuario" class="form-label">Usuario</label>
+        <input type="text" id="usuario" name="usuario" class="form-control" autocomplete="off" required />
+      </div>
+      <div class="mb-3">
+        <label for="clave" class="form-label">Contraseña</label>
+        <input type="password" id="clave" name="clave" class="form-control" autocomplete="new-password" required />
+      <div class="mb-3">
+        <button type="submit" class="btn w-100" style="background-color:#2b375a; color:white;">Ingresar</button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const usuario = document.getElementById("usuario").value;
+      const clave = document.getElementById("clave").value;
+
+      try {
+        const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usuario, clave })
+        });
+
+        const json = await res.json();
+
+        if (json.ok) {
+          localStorage.setItem("usuario", json.nombre);
+          localStorage.setItem("idUsuario", json.id);
+          location.href = "index.html";
+        } else {
+          alert("Usuario o contraseña incorrectos.");
+        }
+      } catch (err) {
+        alert("Error de conexión: " + err);
+      }
+    });
+  </script>
+</body>
+</html>
