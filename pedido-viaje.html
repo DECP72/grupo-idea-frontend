@@ -84,16 +84,16 @@
     <form id="formViaje">
       <div class="inline-fields">
         <div>
-          <label for="dias">Días a viajar:</label>
-          <input type="number" id="dias" name="dias" required>
-        </div>
-        <div>
           <label for="fechaDesde">Desde:</label>
-          <input type="date" id="fechaDesde" name="fechaDesde" required>
+          <input type="datetime-local" id="fechaDesde" name="fechaDesde" required>
         </div>
         <div>
           <label for="fechaHasta">Hasta:</label>
-          <input type="date" id="fechaHasta" name="fechaHasta" required>
+          <input type="datetime-local" id="fechaHasta" name="fechaHasta" required>
+        </div>
+        <div>
+          <label for="dias">Días a viajar:</label>
+          <input type="number" id="dias" name="dias" required readonly>
         </div>
       </div>
 
@@ -104,6 +104,9 @@
         <thead><tr><th>Obra</th><th>Acción</th></tr></thead>
         <tbody></tbody>
       </table>
+
+      <label for="descripcion">Descripción del viaje:</label>
+      <textarea id="descripcion" name="descripcion" required></textarea>
 
       <label for="personalSelect">Personal que viaja:</label>
       <select id="personalSelect"></select>
@@ -116,14 +119,34 @@
       <label for="transporte">Transporte:</label>
       <select id="transporte" name="transporte" required></select>
 
+      <div id="camposPasaje" style="display:none; margin-top:10px;">
+        <label for="origenPasaje">Origen del pasaje:</label>
+        <input type="text" id="origenPasaje" name="origenPasaje">
+
+        <label for="destinoPasaje">Destino del pasaje:</label>
+        <input type="text" id="destinoPasaje" name="destinoPasaje">
+      </div>
+
+      <div style="margin-top:10px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-weight: normal;">
+          <input type="checkbox" id="hospedaje" name="hospedaje" style="width: 22px; height: 22px; margin-right: 6px;">
+          Solicitar hospedaje
+        </label>
+      </div>
+      
+      <div id="campoLocalidad" style="display:none; margin-top:10px;">
+        <label for="localidadHospedaje">Localidad del hospedaje:</label>
+        <input type="text" id="localidadHospedaje" name="localidadHospedaje">
+      </div>
+
       <label for="monto">Monto solicitado:</label>
       <input type="number" id="monto" name="monto" required>
 
       <label for="responsable">Responsable de rendición:</label>
       <select id="responsable" name="responsable" required></select>
 
-      <label for="descripcion">Descripción del viaje:</label>
-      <textarea id="descripcion" name="descripcion" required></textarea>
+      <label for="detalle">Detalle:</label>
+      <textarea id="detalle" name="detalle"></textarea>
 
       <button type="submit">Enviar Pedido</button>
     </form>
@@ -139,6 +162,39 @@
 
     const obrasSeleccionadas = [];
     const personalSeleccionado = [];
+    
+    const camposPasaje = document.getElementById("camposPasaje");
+    const origenPasaje = document.getElementById("origenPasaje");
+    const destinoPasaje = document.getElementById("destinoPasaje");
+    
+    const hospedajeCheckbox = document.getElementById("hospedaje");
+    const campoLocalidad = document.getElementById("campoLocalidad");
+    const localidadHospedaje = document.getElementById("localidadHospedaje");
+    
+    hospedajeCheckbox.addEventListener("change", function() {
+      if (hospedajeCheckbox.checked) {
+        campoLocalidad.style.display = "block";
+        localidadHospedaje.required = true;
+      } else {
+        campoLocalidad.style.display = "none";
+        localidadHospedaje.required = false;
+        localidadHospedaje.value = "";
+      }
+    });
+    transporteSelect.addEventListener("change", function() {
+      if (transporteSelect.value === "pasaje") {
+        camposPasaje.style.display = "block";
+        origenPasaje.required = true;
+        destinoPasaje.required = true;
+      } else {
+        camposPasaje.style.display = "none";
+        origenPasaje.required = false;
+        destinoPasaje.required = false;
+        origenPasaje.value = "";
+        destinoPasaje.value = "";
+      }
+    });
+    
 
     async function cargarDatos() {
       try {
@@ -203,8 +259,9 @@
     function actualizarDescripcionAuto() {
       if (obrasSeleccionadas.length > 0 && document.getElementById("fechaDesde").value) {
         const nombreObra = obrasSeleccionadas[0].nombre;
-        const fechaSalida = document.getElementById("fechaDesde").value;
-        document.getElementById("descripcion").value = `Viaje a ${nombreObra} el ${fechaSalida}`;
+        const fechaCompleta = document.getElementById("fechaDesde").value;
+        const fechaSolo = fechaCompleta.split("T")[0]; // Solo la fecha (YYYY-MM-DD)
+        document.getElementById("descripcion").value = `Viaje a ${nombreObra} el ${fechaSolo}`;
       }
     }
 
@@ -257,20 +314,52 @@
       }
     }
 
-    document.getElementById("formViaje").addEventListener("submit", async e => {
-      e.preventDefault();
-    const datos = {
-      dias: Number(document.getElementById("dias").value),
-      fechaDesde: document.getElementById("fechaDesde").value,
-      fechaHasta: document.getElementById("fechaHasta").value,
-      obras: obrasSeleccionadas.map(o => o.id),
-      personal: personalSeleccionado.map(p => p.id),
-      IdTransporte: Number(transporteSelect.value),
-      monto: Number(document.getElementById("monto").value),
-      IdResponsableRendicion: Number(responsableSelect.value),
-      descripcion: document.getElementById("descripcion").value,
-      IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario"))
-    };
+function calcularDias() {
+  const desde = document.getElementById("fechaDesde").value;
+  const hasta = document.getElementById("fechaHasta").value;
+  const diasInput = document.getElementById("dias");
+  if (desde && hasta) {
+    const fechaDesde = new Date(desde);
+    const fechaHasta = new Date(hasta);
+    // Diferencia en milisegundos
+    const diffMs = fechaHasta - fechaDesde;
+    // Diferencia en días (redondeando hacia arriba)
+    const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    diasInput.value = diffDias > 0 ? diffDias : 1;
+  } else {
+    diasInput.value = "";
+  }
+}
+
+document.getElementById("fechaDesde").addEventListener("change", calcularDias);
+document.getElementById("fechaHasta").addEventListener("change", calcularDias);
+
+document.getElementById("formViaje").addEventListener("submit", async e => {
+  e.preventDefault();
+  let detalleFinal = document.getElementById("detalle").value;
+  if (transporteSelect.value === "pasaje") {
+    detalleFinal += (detalleFinal ? "\n" : "") +
+      "Pasajes:\n" +
+      "Origen: " + origenPasaje.value + "\n" +
+      "Destino: " + destinoPasaje.value;
+  }
+  if (hospedajeCheckbox.checked) {
+    detalleFinal += (detalleFinal ? "\n" : "") +
+      "Hospedaje solicitado en: " + localidadHospedaje.value;
+  }
+  const datos = {
+    dias: Number(document.getElementById("dias").value),
+    fechaDesde: document.getElementById("fechaDesde").value,
+    fechaHasta: document.getElementById("fechaHasta").value,
+    obras: obrasSeleccionadas.map(o => o.id),
+    personal: personalSeleccionado.map(p => p.id),
+    IdTransporte: Number(transporteSelect.value),
+    monto: Number(document.getElementById("monto").value),
+    IdResponsableRendicion: Number(responsableSelect.value),
+    descripcion: document.getElementById("descripcion").value,
+    detalle: detalleFinal,
+    IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario"))
+  };
     
       try {
         const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/pedidos", {
