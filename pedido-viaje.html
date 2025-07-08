@@ -347,18 +347,22 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
     detalleFinal += (detalleFinal ? "\n" : "") +
       "Hospedaje solicitado en: " + localidadHospedaje.value;
   }
+  const idTransporte = transporteSelect.value === "pasaje" ? null : Number(transporteSelect.value);
+
   const datos = {
     dias: Number(document.getElementById("dias").value),
     fechaDesde: document.getElementById("fechaDesde").value,
     fechaHasta: document.getElementById("fechaHasta").value,
     obras: obrasSeleccionadas.map(o => o.id),
     personal: personalSeleccionado.map(p => p.id),
-    IdTransporte: Number(transporteSelect.value),
+    IdTransporte: idTransporte,
     monto: Number(document.getElementById("monto").value),
     IdResponsableRendicion: Number(responsableSelect.value),
     descripcion: document.getElementById("descripcion").value,
     detalle: detalleFinal,
-    IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario"))
+    IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario")),
+    alojamiento: hospedajeCheckbox.checked ? "Sí" : "No",
+    localidad: hospedajeCheckbox.checked ? localidadHospedaje.value : ""
   };
     
       try {
