@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pedido de Viaje - Grupo Idea</title>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -92,8 +95,8 @@
           <input type="datetime-local" id="fechaHasta" name="fechaHasta" required>
         </div>
         <div>
-          <label for="dias">Días a viajar:</label>
-          <input type="number" id="dias" name="dias" required readonly>
+          <!--<label for="dias">Días a viajar:</label>-->
+          <input type="hidden" id="dias" name="dias" required readonly>
         </div>
       </div>
 
@@ -142,8 +145,25 @@
         <input type="text" id="localidadHospedaje" name="localidadHospedaje">
       </div>
 
-      <label for="monto">Gastos a rendir:</label>
-      <input type="number" id="monto" name="monto" required>
+      <label for="gastosRendir">¿Solicitás Gastos a rendir (aparte de los viáticos)?</label>
+      <select id="gastosRendir" name="gastosRendir" required>
+        <option value="">Elige</option>
+        <option value="no">No</option>
+        <option value="si">Sí</option>
+      </select>
+
+      <div id="montoOpciones" style="display:none; margin-top:8px;">
+        <label for="montoSelect">Seleccioná un monto sugerido:</label>
+        <select id="montoSelect">
+          <option value="">Elige</option>
+          <option value="50000">Técnico o MM $50.000</option>
+          <option value="100000">Operarios hasta 1 semana $100.000</option>
+          <option value="200000">Operarios más de 1 semana $200.000</option>
+          <option value="manual">Ingresar importe manualmente</option>
+        </select>
+        <input type="number" id="montoManual" placeholder="Ingrese importe" style="display:none; margin-top:6px;">
+      </div>
+      <input type="hidden" id="monto" name="monto" value="0">
 
       <label for="detalle">Detalle:</label>
       <textarea id="detalle" name="detalle"></textarea>
@@ -282,8 +302,9 @@
     obraSelect.addEventListener("change", function() {
       if (obraSelect.value) {
         agregarObra();
-        // Opcional: vuelve a dejar el select en blanco
+        // Deja el select vacío y actualiza Select2
         obraSelect.selectedIndex = 0;
+        $('#obraSelect').val('').trigger('change');
       }
     });
         
@@ -300,8 +321,8 @@
     personalSelect.addEventListener("change", function() {
       if (personalSelect.value) {
         agregarPersonal();
-        // Opcional: vuelve a dejar el select en blanco
         personalSelect.selectedIndex = 0;
+        $('#personalSelect').val('').trigger('change');
       }
     });
     function eliminarFila(btn, tipo) {
@@ -364,6 +385,7 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
     descripcion: document.getElementById("descripcion").value,
     detalle: detalleFinal,
     IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario")),
+    nombreUsuarioSolicitante: localStorage.getItem("nombreUsuario"), 
     alojamiento: hospedajeCheckbox.checked ? "Sí" : "No",
     localidad: hospedajeCheckbox.checked ? localidadHospedaje.value : ""
   };
@@ -386,6 +408,56 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
       }
     });
 
+    $(document).ready(function() {
+  $('#obraSelect').select2({ width: '100%' });
+  $('#personalSelect').select2({ width: '100%' });
+  $('#responsable').select2({ width: '100%' });
+  
+  // Para obras
+  $('#obraSelect').on('select2:select', function (e) {
+    agregarObra();
+    $('#obraSelect').val('').trigger('change');
+  });
+
+  // Para personal
+  $('#personalSelect').on('select2:select', function (e) {
+    agregarPersonal();
+    $('#personalSelect').val('').trigger('change');
+  });
+});
+const gastosRendir = document.getElementById("gastosRendir");
+const montoOpciones = document.getElementById("montoOpciones");
+const montoSelect = document.getElementById("montoSelect");
+const montoManual = document.getElementById("montoManual");
+const montoInput = document.getElementById("monto");
+
+gastosRendir.addEventListener("change", function() {
+  if (this.value === "si") {
+    montoOpciones.style.display = "block";
+    montoInput.value = "";
+  } else {
+    montoOpciones.style.display = "none";
+    montoInput.value = "0";
+  }
+});
+
+montoSelect.addEventListener("change", function() {
+  if (this.value === "manual") {
+    montoManual.style.display = "inline-block";
+    montoManual.value = "";
+    montoInput.value = "";
+  } else if (this.value) {
+    montoManual.style.display = "none";
+    montoInput.value = this.value;
+  } else {
+    montoManual.style.display = "none";
+    montoInput.value = "";
+  }
+});
+
+montoManual.addEventListener("input", function() {
+  montoInput.value = this.value;
+});
   </script>
 </body>
 </html>
