@@ -77,141 +77,178 @@
         <label><strong>Diferencia (recibir/entregar):</strong> $<span id="diferencia">0.00</span></label>
       </div>
 
-      <button type="submit" class="btn btn-primary mt-3">Enviar Rendición</button>
+      <div class="mt-3">
+        <button type="button" class="btn btn-success me-2" onclick="enviarRendicion(false)">Guardar Parcial</button>
+        <button type="button" class="btn btn-danger" onclick="enviarRendicion(true)">Cerrar Rendición</button>
+      </div>
+
+      <div class="mt-3">
+        <p class="text-muted">* Todos los campos son obligatorios.</p>
+      </div>
+
     </form>
   </div>
 
-  <script>
-    let montoOtorgado = 0;
+<script>
+let montoOtorgado = 0;
 
-    function agregarFila() {
-      const fila = document.createElement("tr");
-      const id = Date.now();
-      fila.innerHTML = `
-        <td>
-          <input type="file" id="file-${id}" style="display:none" accept="image/*">
-          <div id="preview-${id}" class="mt-1 text-center"></div>
-        </td>
-        <td><input type="number" class="form-control importe" step="0.01" required></td>
-        <td>
-          <select class="form-select">
-            <option>Comida</option>
-            <option>Alojamiento</option>
-            <option>Combustible</option>
-            <option>Otros</option>
-          </select>
-        </td>
-        <td><input type="text" class="form-control"></td>
-        <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
-      `;
-      document.getElementById("tablaGastos").appendChild(fila);
+function agregarFila() {
+  const fila = document.createElement("tr");
+  const id = Date.now();
+  fila.innerHTML = `
+    <td>
+      <input type="file" id="file-${id}" style="display:none" accept="image/*">
+      <div id="preview-${id}" class="mt-1 text-center"></div>
+    </td>
+    <td><input type="number" class="form-control importe" step="0.01" required></td>
+    <td>
+      <select class="form-select">
+        <option>Comida</option>
+        <option>Alojamiento</option>
+        <option>Combustible</option>
+        <option>Otros</option>
+      </select>
+    </td>
+    <td><input type="text" class="form-control"></td>
+    <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
+  `;
+  document.getElementById("tablaGastos").appendChild(fila);
 
-      const input = fila.querySelector(`#file-${id}`);
-      const preview = fila.querySelector(`#preview-${id}`);
-      input.click();
+  const input = fila.querySelector(`#file-${id}`);
+  const preview = fila.querySelector(`#preview-${id}`);
+  input.click();
 
-      input.addEventListener("change", () => {
-        const file = input.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = e => {
-            preview.innerHTML = `<img src="${e.target.result}" alt="comprobante" class="preview-img">`;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-    }
-
-    function calcularDiferencia() {
-      const importes = document.querySelectorAll(".importe");
-      let total = 0;
-      importes.forEach(i => total += parseFloat(i.value) || 0);
-      const diferencia = montoOtorgado - total;
-      document.getElementById("diferencia").textContent = diferencia.toFixed(2);
-    }
-
-document.getElementById("formRendicion").addEventListener("submit", async e => {
-    e.preventDefault();
-
-    const IdViaje = Number(document.getElementById("viaje").value);
-    const filas = document.querySelectorAll("#tablaGastos tr");
-    const comprobantes = [];
-    const formData = new FormData();
-    let total = 0;
-
-    filas.forEach((fila, index) => {
-      const importe = parseFloat(fila.querySelector("input.form-control.importe").value) || 0;
-      const tipo = fila.querySelector("select").value;
-      const observaciones = fila.querySelector("input[type='text']").value;
-      const fileInput = fila.querySelector("input[type='file']");
-      const file = fileInput.files[0];
-
-      total += importe;
-
-      comprobantes.push({ tipo, importe, observaciones });
-      if (file) {
-        formData.append("comprobantes", file);
-      } else {
-        formData.append("comprobantes", new Blob([])); // para mantener índice
-      }
-    });
-
-    formData.append("datos", JSON.stringify({
-      IdViaje,
-      montoRendido: total,
-      diferencia: montoOtorgado - total,
-      comprobantes
-    }));
-
-
-    try {  const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/rendicion", 
-{        method: "POST",
-        body: formData
-      });
-      const json = await res.json();
-      if (json.ok) {
-        alert("Rendición enviada correctamente.");
-        location.reload();
-      } else {
-        alert("Error al enviar rendición: " + json.error);
-      }
-    } catch (err) {
-      alert("Error de conexión: " + err.message);
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.innerHTML = `<img src="${e.target.result}" alt="comprobante" class="preview-img">`;
+      };
+      reader.readAsDataURL(file);
     }
   });
+}
 
-    document.getElementById("tablaGastos").addEventListener("input", calcularDiferencia);
+function calcularDiferencia() {
+  const importes = document.querySelectorAll(".importe");
+  let total = 0;
+  importes.forEach(i => total += parseFloat(i.value) || 0);
+  const diferencia = montoOtorgado - total;
+  document.getElementById("diferencia").textContent = diferencia.toFixed(2);
+}
 
-    async function cargarViajes() {
-      try {
-        const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/viajes_a_rendir/a-rendir");
-        const viajes = await res.json();
-        const select = document.getElementById("viaje");
-        select.innerHTML = "";
-        viajes.forEach(v => {
-          const opt = document.createElement("option");
-          opt.value = v.id;
-          opt.textContent = `${v.descripcion} (Otorgado: $${v.monto})`;
-          opt.dataset.monto = v.monto;
-          select.appendChild(opt);
-        });
-        if (viajes.length > 0) {
-          montoOtorgado = parseFloat(viajes[0].monto);
-          document.getElementById("montoOtorgado").textContent = montoOtorgado.toFixed(2);
-        }
-      } catch (err) {
-        alert("Error al cargar viajes: " + err);
-      }
-    }
+document.getElementById("formRendicion").addEventListener("submit", e => {
+  e.preventDefault();
+  enviarRendicion(false);
+});
 
-    document.getElementById("viaje").addEventListener("change", function() {
-      const monto = parseFloat(this.selectedOptions[0].dataset.monto);
-      montoOtorgado = monto;
-      document.getElementById("montoOtorgado").textContent = monto.toFixed(2);
-      calcularDiferencia();
+document.getElementById("tablaGastos").addEventListener("input", calcularDiferencia);
+
+async function cargarViajes() {
+  try {
+    const idUsuario = localStorage.getItem("idUsuario");
+    const res = await fetch(`https://grupo-idea-backend-1.onrender.com/api/viajes_a_rendir/a-rendir?idUsuario=${idUsuario}`);
+    const viajes = await res.json();
+    const select = document.getElementById("viaje");
+    select.innerHTML = "";
+    viajes.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = `${v.descripcion} (Otorgado: $${v.monto})`;
+      opt.dataset.monto = v.monto;
+      select.appendChild(opt);
     });
+    if (viajes.length > 0) {
+      montoOtorgado = parseFloat(viajes[0].monto);
+      document.getElementById("montoOtorgado").textContent = montoOtorgado.toFixed(2);
+    }
+  } catch (err) {
+    alert("Error al cargar viajes: " + err);
+  }
+}
 
-    cargarViajes();
-  </script>
+document.getElementById("viaje").addEventListener("change", async function () {
+  const idViaje = this.value;
+  const monto = parseFloat(this.selectedOptions[0].dataset.monto);
+  montoOtorgado = monto;
+  document.getElementById("montoOtorgado").textContent = monto.toFixed(2);
+  calcularDiferencia();
+
+  const res = await fetch(`https://grupo-idea-backend-1.onrender.com/api/viajes_a_rendir/a-rendir/detalle?idViaje=${idViaje}`);
+  const detalle = await res.json();
+
+  const tabla = document.getElementById("tablaGastos");
+  tabla.innerHTML = "";
+
+  if (detalle && detalle.comprobantes) {
+    detalle.comprobantes.forEach(comp => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td><div class="text-muted">Ya cargado</div></td>
+        <td><input type="number" class="form-control importe" step="0.01" value="${comp.importe}" required></td>
+        <td>
+          <select class="form-select">
+            <option${comp.tipogasto === 'Comida' ? ' selected' : ''}>Comida</option>
+            <option${comp.tipogasto === 'Alojamiento' ? ' selected' : ''}>Alojamiento</option>
+            <option${comp.tipogasto === 'Combustible' ? ' selected' : ''}>Combustible</option>
+            <option${comp.tipogasto === 'Otros' ? ' selected' : ''}>Otros</option>
+          </select>
+        </td>
+        <td><input type="text" class="form-control" value="${comp.observaciones || ''}"></td>
+        <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
+      `;
+      tabla.appendChild(fila);
+    });
+    calcularDiferencia();
+  }
+});
+
+async function enviarRendicion(cerrar) {
+  const IdViaje = Number(document.getElementById("viaje").value);
+  const filas = document.querySelectorAll("#tablaGastos tr");
+  const comprobantes = [];
+  const formData = new FormData();
+  let total = 0;
+
+  filas.forEach((fila, index) => {
+    const importe = parseFloat(fila.querySelector("input.form-control.importe").value) || 0;
+    const tipo = fila.querySelector("select").value;
+    const observaciones = fila.querySelector("input[type='text']").value;
+    const fileInput = fila.querySelector("input[type='file']");
+    const file = fileInput ? fileInput.files[0] : null;
+
+    total += importe;
+    comprobantes.push({ tipo, importe, observaciones });
+    formData.append("comprobantes", file || new Blob([]));
+  });
+
+  formData.append("datos", JSON.stringify({
+    IdViaje,
+    montoRendido: total,
+    diferencia: montoOtorgado - total,
+    comprobantes,
+    cerrado: cerrar
+  }));
+
+  try {
+    const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/rendicion", {
+      method: "POST",
+      body: formData
+    });
+    const json = await res.json();
+    if (json.ok) {
+      alert(cerrar ? "Rendición cerrada correctamente." : "Rendición guardada.");
+      location.reload();
+    } else {
+      alert("Error al enviar rendición: " + json.error);
+    }
+  } catch (err) {
+    alert("Error de conexión: " + err.message);
+  }
+}
+
+cargarViajes();
+</script>
 </body>
 </html>
