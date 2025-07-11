@@ -92,27 +92,38 @@
 
 <script>
 let montoOtorgado = 0;
+let tiposGasto = [];
 
-function agregarFila() {
+async function cargarTiposGasto() {
+  try {
+    const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/viajes_a_rendir/tipos-gasto");
+    tiposGasto = await res.json();
+  } catch (err) {
+    alert("Error al cargar tipos de gasto: " + err.message);
+  }
+}
+
+function agregarFila(data = {}) {
   const fila = document.createElement("tr");
   const id = Date.now();
+
+  const selectOptions = tiposGasto.map(t =>
+    `<option value="${t.id}" ${data.tipo == t.id ? 'selected' : ''}>${t.descripcion}</option>`
+  ).join("");
+
   fila.innerHTML = `
     <td>
       <input type="file" id="file-${id}" style="display:none" accept="image/*">
       <div id="preview-${id}" class="mt-1 text-center"></div>
     </td>
-    <td><input type="number" class="form-control importe" step="0.01" required></td>
+    <td><input type="number" class="form-control importe" step="0.01" value="${data.importe || ''}" required></td>
     <td>
-      <select class="form-select">
-        <option>Comida</option>
-        <option>Alojamiento</option>
-        <option>Combustible</option>
-        <option>Otros</option>
-      </select>
+      <select class="form-select">${selectOptions}</select>
     </td>
-    <td><input type="text" class="form-control"></td>
+    <td><input type="text" class="form-control" value="${data.observaciones || ''}"></td>
     <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
   `;
+
   document.getElementById("tablaGastos").appendChild(fila);
 
   const input = fila.querySelector(`#file-${id}`);
@@ -130,6 +141,7 @@ function agregarFila() {
     }
   });
 }
+
 
 function calcularDiferencia() {
   const importes = document.querySelectorAll(".importe");
