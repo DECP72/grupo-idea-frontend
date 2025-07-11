@@ -172,6 +172,14 @@ async function cargarViajes() {
     }
     const select = document.getElementById("viaje");
     select.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "-- Seleccione un viaje --";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    select.appendChild(placeholder);
+    
     viajes.forEach(v => {
       const opt = document.createElement("option");
       opt.value = v.id;
@@ -201,29 +209,45 @@ document.getElementById("viaje").addEventListener("change", async function () {
   const tabla = document.getElementById("tablaGastos");
   tabla.innerHTML = "";
 
-  if (detalle && detalle.comprobantes) {
-    detalle.comprobantes.forEach(comp => {
-      const fila = document.createElement("tr");
+if (detalle && detalle.comprobantes) {
+  const tabla = document.getElementById("tablaGastos");
+  tabla.innerHTML = "";
 
-      const selectOptions = tiposGasto.map(t =>
-        `<option value="${t.id}" ${comp.tipogasto == t.id ? 'selected' : ''}>${t.descripcion}</option>`
-      ).join("");
+  detalle.comprobantes.forEach((comp, i) => {
+    const fila = document.createElement("tr");
+    const id = `cargado-${i}`;
 
-      fila.innerHTML = `
-        <td><div class="text-muted">Ya cargado</div></td>
-        <td><input type="number" class="form-control importe" step="0.01" value="${comp.importe}" required></td>
-        <td><select class="form-select">${selectOptions}</select></td>
-        <td><input type="text" class="form-control" value="${comp.observaciones || ''}"></td>
-        <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
-      `;
+    const selectOptions = tiposGasto.map(t =>
+      `<option value="${t.id}" ${t.id === comp.idtipogasto ? "selected" : ""}>${t.descripcion}</option>`
+    ).join("");
 
-      tabla.appendChild(fila);
-    });
+    // Convertir buffer de comprobante en imagen si existe
+    let imagenPreview = `<div class="text-muted">Ya cargado</div>`;
+    if (comp.comprobante && comp.comprobante.data && comp.comprobante.data.length > 0) {
+      const byteArray = new Uint8Array(comp.comprobante.data);
+      const blob = new Blob([byteArray], { type: "image/jpeg" });
+      const url = URL.createObjectURL(blob);
+      imagenPreview = `<img src="${url}" alt="comprobante" class="preview-img">`;
+    }
+
+    fila.innerHTML = `
+      <td>${imagenPreview}</td>
+      <td><input type="number" class="form-control importe" step="0.01" value="${comp.importe}" required></td>
+      <td><select class="form-select">${selectOptions}</select></td>
+      <td><input type="text" class="form-control" value="${comp.observaciones || ''}"></td>
+      <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
+    `;
+
+    tabla.appendChild(fila);
+  });
+
+  calcularDiferencia();
+}
+
 
     calcularDiferencia();
   }
-
-});
+);
 
 async function enviarRendicion(cerrar) {
   const IdViaje = Number(document.getElementById("viaje").value);
