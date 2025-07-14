@@ -413,7 +413,7 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
     descripcion: document.getElementById("descripcion").value,
     detalle: detalleFinal,
     IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario")),
-    nombreUsuarioSolicitante: localStorage.getItem("nombre"), 
+    nombreUsuarioSolicitante: localStorage.getItem("usuario"), 
     alojamiento: hospedajeCheckbox.checked ? "Sí" : "No",
     localidad: hospedajeCheckbox.checked ? localidadHospedaje.value : ""
   };
