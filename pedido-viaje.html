@@ -243,14 +243,14 @@
         obras.forEach(o => {
           const opt = document.createElement("option");
           opt.value = o.id;
-          opt.textContent = o.nombre;
+          opt.textContent = `PI: ${o.id} Obra: ${o.nombre}`;
           obraSelect.appendChild(opt);
         });
 
         personas.forEach(p => {
           const opt = document.createElement("option");
           opt.value = p.id;
-          opt.textContent = p.nombre;
+          opt.textContent = `Codigo: ${p.id} Personal: ${p.nombre}`;
           personalSelect.appendChild(opt);
         });
 
