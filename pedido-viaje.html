@@ -273,6 +273,11 @@
         optPasaje.textContent = "Comprar pasaje";
         transporteSelect.appendChild(optPasaje);
 
+        const optSeminarios = document.createElement("option");
+        optSeminarios.value = "Otros";
+        optSeminarios.textContent = "Seminarios y capacitaciones";
+        obraSelect.appendChild(optSeminarios);
+
       } catch (err) {
         alert("Error cargando datos: " + err);
       }
@@ -372,12 +377,13 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
       "Hospedaje solicitado en: " + localidadHospedaje.value;
   }
   const idTransporte = transporteSelect.value === "pasaje" ? null : Number(transporteSelect.value);
+  const idObra = obraSelect.value === "Otros" ? null : Number(obraSelect.value);
 
   const datos = {
     dias: Number(document.getElementById("dias").value),
     fechaDesde: document.getElementById("fechaDesde").value,
     fechaHasta: document.getElementById("fechaHasta").value,
-    obras: obrasSeleccionadas.map(o => o.id),
+    obras: idObra, //obrasSeleccionadas.map(o => o.id),
     personal: personalSeleccionado.map(p => p.id),
     IdTransporte: idTransporte,
     monto: Number(document.getElementById("monto").value),
