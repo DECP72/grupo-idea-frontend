@@ -304,9 +304,15 @@
         actualizarDescripcionAuto();
       }
       if (id === "Otros") {
-        alert("Corrija al descripción del viaje y en detalle agregue el lugar de la reunión"); // mensaje en caso de "Otros"
+        const respuesta = prompt("Ingrese el lugar del seminario o capacitación:");
+        let detalle = document.getElementById("detalle").value;   
+         if (respuesta !== null) {
+            detalle += (detalle ? "\n" : "") +
+            "Seminario o capacitación a realizarse en: " + respuesta;
+          }
+        document.getElementById("detalle").value = detalle;
+        }
       }
-    }
     obraSelect.addEventListener("change", function() {
       if (obraSelect.value) {
         agregarObra();
