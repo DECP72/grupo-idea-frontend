@@ -352,22 +352,35 @@
       }
     }
 
-function calcularDias() {
-  const desde = document.getElementById("fechaDesde").value;
-  const hasta = document.getElementById("fechaHasta").value;
-  const diasInput = document.getElementById("dias");
-  if (desde && hasta) {
-    const fechaDesde = new Date(desde);
-    const fechaHasta = new Date(hasta);
-    // Diferencia en milisegundos
-    const diffMs = fechaHasta - fechaDesde;
-    // Diferencia en días (redondeando hacia arriba)
-    const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    diasInput.value = diffDias > 0 ? diffDias : 1;
-  } else {
-    diasInput.value = "";
-  }
-}
+
+    function obtenerObrasParaEnviar() {
+      // Si la única obra seleccionada es "Otros", se devuelve null
+      if (obrasSeleccionadas.length === 1 && obrasSeleccionadas[0].id === "Otros") {
+        return null;
+      }
+
+      // Si hay varias y alguna es "Otros", se excluye
+      return obrasSeleccionadas
+        .filter(o => o.id !== "Otros")
+        .map(o => parseInt(o.id)); // asegúrate que sean enteros
+    }
+
+    function calcularDias() {
+      const desde = document.getElementById("fechaDesde").value;
+      const hasta = document.getElementById("fechaHasta").value;
+      const diasInput = document.getElementById("dias");
+      if (desde && hasta) {
+        const fechaDesde = new Date(desde);
+        const fechaHasta = new Date(hasta);
+        // Diferencia en milisegundos
+        const diffMs = fechaHasta - fechaDesde;
+        // Diferencia en días (redondeando hacia arriba)
+        const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        diasInput.value = diffDias > 0 ? diffDias : 1;
+      } else {
+        diasInput.value = "";
+      }
+    }
 
 document.getElementById("fechaDesde").addEventListener("change", calcularDias);
 document.getElementById("fechaHasta").addEventListener("change", calcularDias);
@@ -392,7 +405,7 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
     dias: Number(document.getElementById("dias").value),
     fechaDesde: document.getElementById("fechaDesde").value,
     fechaHasta: document.getElementById("fechaHasta").value,
-    obras: idObra, //obrasSeleccionadas.map(o => o.id),
+    obras: obtenerObrasParaEnviar(),
     personal: personalSeleccionado.map(p => p.id),
     IdTransporte: idTransporte,
     monto: Number(document.getElementById("monto").value),
