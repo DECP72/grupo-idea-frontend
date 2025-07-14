@@ -303,6 +303,9 @@
         row.innerHTML = `<td>${nombre}</td><td><button type="button" onclick="eliminarFila(this, 'obras')">Quitar</button></td>`;
         actualizarDescripcionAuto();
       }
+      if (id === "Otros") {
+        alert("Corrija al descripción del viaje y en detalle agregue el lugar de la reunión"); // mensaje en caso de "Otros"
+      }
     }
     obraSelect.addEventListener("change", function() {
       if (obraSelect.value) {
