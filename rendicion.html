@@ -223,11 +223,8 @@ if (detalle && detalle.comprobantes) {
 
     // Convertir buffer de comprobante en imagen si existe
     let imagenPreview = `<div class="text-muted">Ya cargado</div>`;
-    if (comp.comprobante && comp.comprobante.data && comp.comprobante.data.length > 0) {
-      const byteArray = new Uint8Array(comp.comprobante.data);
-      const blob = new Blob([byteArray], { type: "image/jpeg" });
-      const url = URL.createObjectURL(blob);
-      imagenPreview = `<img src="${url}" alt="comprobante" class="preview-img">`;
+    if (comp.imagenBase64) {
+      imagenPreview = `<img src="${comp.imagenBase64}" alt="comprobante" class="preview-img">`;
     }
 
     fila.innerHTML = `
