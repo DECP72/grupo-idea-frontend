@@ -113,7 +113,7 @@ function agregarFila(data = {}) {
 
   fila.innerHTML = `
     <td>
-      <input type="file" id="file-${id}" style="display:none" accept="image/*">
+      <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/*">
       <div id="preview-${id}" class="mt-1 text-center"></div>
     </td>
     <td><input type="number" class="form-control importe" step="0.01" value="${data.importe || ''}" required></td>
@@ -125,21 +125,34 @@ function agregarFila(data = {}) {
   `;
 
   document.getElementById("tablaGastos").appendChild(fila);
-
+// Manejar carga de imagen
   const input = fila.querySelector(`#file-${id}`);
   const preview = fila.querySelector(`#preview-${id}`);
   input.click();
 
-  input.addEventListener("change", () => {
-    const file = input.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        preview.innerHTML = `<img src="${e.target.result}" alt="comprobante" class="preview-img">`;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
+    // Mostrar mensaje por defecto
+preview.innerHTML = `<span style="color: #888;">(doble clic para cargar)</span>`;
+preview.style.cursor = "pointer";
+preview.style.border = "1px dashed #ccc";
+preview.style.padding = "5px";
+preview.style.minHeight = "50px";
+
+preview.addEventListener("dblclick", () => {
+  input.click(); // disparar el file input al hacer doble clic
+});
+
+input.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.innerHTML = `<img src="${e.target.result}" alt="Comprobante" style="max-width: 100px;">`;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML = `<span style="color: red">Archivo inválido</span>`;
+  }
+});
 }
 
 
@@ -222,10 +235,10 @@ if (detalle && detalle.comprobantes) {
     ).join("");
 
     // Convertir buffer de comprobante en imagen si existe
-    let imagenPreview = `<div class="text-muted">Ya cargado</div>`;
-    if (comp.imagenBase64) {
-      imagenPreview = `<img src="${comp.imagenBase64}" alt="comprobante" class="preview-img">`;
-    }
+  let imagenPreview = `<div class="text-muted">Ya cargado</div>`;
+  if (comp.imagenBase64) {
+    imagenPreview = `<img src="${comp.imagenBase64}" alt="comprobante" class="preview-img">`;
+  }
 
     fila.innerHTML = `
       <td>${imagenPreview}</td>
@@ -262,7 +275,9 @@ async function enviarRendicion(cerrar) {
 
     total += importe;
     comprobantes.push({ tipo, importe, observaciones });
-    formData.append("comprobantes", file || new Blob([]));
+    if (file) {
+      formData.append("comprobantes", file);
+    };
   });
 
   formData.append("datos", JSON.stringify({
