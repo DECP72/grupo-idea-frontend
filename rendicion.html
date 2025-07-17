@@ -113,7 +113,7 @@ function agregarFila(data = {}) {
 
   fila.innerHTML = `
     <td>
-      <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/*">
+      <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/* capture="environment">
       <div id="preview-${id}" class="mt-1 text-center"></div>
     </td>
     <td><input type="number" class="form-control importe" step="0.01" value="${data.importe || ''}" required></td>
