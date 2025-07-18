@@ -46,7 +46,28 @@
     .btn-add {
         margin-top: 10px;
     }
+
+    .botones-rendicion {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .botones-rendicion .btn {
+      flex: 1 1 auto;
+      min-width: 120px;
+      font-size: 0.95rem;
+      padding: 10px 12px;
+      white-space: nowrap;
+    }
+
     @media (max-width: 576px) {
+      .botones-rendicion .btn {
+        font-size: 0.85rem;
+        padding: 8px 10px;
+      }
       h1, h2 {
         font-size: 1.3rem;
       }
