@@ -71,8 +71,8 @@
       <h2>Menú Principal</h2>
     </div>
 
-    <button onclick="location.href='pedido-viaje.html'">Pedido de Viaje</button>
-    <button onclick="location.href='rendicion.html'">Rendición de Gastos</button>
+    <button id="btnPedido" onclick="location.href='pedido-viaje.html'">Pedido de Viaje</button>
+    <button id="btnRendir" onclick="location.href='rendicion.html'">Rendición de Gastos</button>
     <button onclick="cerrarSesion()">Cerrar Sesión</button>
 
     <div class="usuario">Usuario conectado: <strong id="usuarioNombre">-</strong></div>
@@ -82,8 +82,35 @@
     if (!localStorage.getItem("usuario")) {
         window.location.href = "login.html";
     }
-    // Simular el nombre del usuario (esto debería venir de la sesión/backend en futuro)
-    document.getElementById("usuarioNombre").textContent = localStorage.getItem("usuario") || "Invitado";
+
+    const idUsuario = localStorage.getItem("idUsuario");
+    try {
+        const res = await fetch(`https://grupo-idea-backend-1.onrender.com/api/usuariosLogin?idUsuario=${idUsuario}`);
+        
+        const json = await res.json();
+
+        if (json.ok) {
+        localStorage.setItem("solicitar_viaje", json.solicitar_viaje);
+        localStorage.setItem("rendir_viaje", json.rendir_viaje);
+        } else {
+          alert("Error al cargar los permisos.");
+        }
+    } catch (err) {
+      alert("Error de conexión: " + err.message);
+    }
+    const nombreUsuario = localStorage.setItem("nombre") || "Invitado";
+    document.getElementById("usuarioNombre").textContent = nombreUsuario;
+
+    const puedeSolicitar = localStorage.setItem("solicitar_viaje") === "true";
+    const puedeRendir = localStorage.setItem("rendir_viaje") === "true";
+
+    // Mostrar u ocultar botones según permisos
+    if (!puedeSolicitar) {
+      document.getElementById("btnPedido").style.display = "none";
+    }
+    if (!puedeRendir) {
+      document.getElementById("btnRendicion").style.display = "none";
+    }
 
     function cerrarSesion() {
       localStorage.removeItem("usuario");
