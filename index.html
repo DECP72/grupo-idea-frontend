@@ -21,6 +21,12 @@
     h1 {
       margin: 0;
     }
+    button[disabled] {
+      background-color: #cccccc;
+      color: #666666;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
     .container {
       max-width: 500px;
       margin: 40px auto;
@@ -79,41 +85,51 @@
   </div>
 
   <script>
-    if (!localStorage.getItem("usuario")) {
+    // Verificar si el usuario está logueado
+    (async () => {
+      if (!localStorage.getItem("usuario")) {
         window.location.href = "login.html";
-    }
-
-    const idUsuario = localStorage.getItem("idUsuario");
-    try {
+        return;
+      }
+      //alert("Bienvenido " + localStorage.getItem("usuario"));
+      // Cargar permisos del usuario
+      const idUsuario = localStorage.getItem("idUsuario");
+      try {
         const res = await fetch(`https://grupo-idea-backend-1.onrender.com/api/usuariosLogin?idUsuario=${idUsuario}`);
-        
         const json = await res.json();
 
         if (json.ok) {
-        localStorage.setItem("solicitar_viaje", json.solicitar_viaje);
-        localStorage.setItem("rendir_viaje", json.rendir_viaje);
+          localStorage.setItem("solicitar_viaje", json.solicitar_viaje);
+          localStorage.setItem("rendir_viaje", json.rendir_viaje);
         } else {
           alert("Error al cargar los permisos.");
         }
-    } catch (err) {
-      alert("Error de conexión: " + err.message);
-    }
-    const nombreUsuario = localStorage.setItem("nombre") || "Invitado";
-    document.getElementById("usuarioNombre").textContent = nombreUsuario;
+      } catch (err) {
+        alert("Error de conexión: " + err.message);
+      }
+      // Actualizar nombre de usuario
+      const nombreUsuario = localStorage.getItem("usuario") || "Invitado";
+      document.getElementById("usuarioNombre").textContent = nombreUsuario;
+      // Mostrar u ocultar botones según permisos
+      const puedeSolicitar = localStorage.getItem("solicitar_viaje") === "true";
+      const puedeRendir = localStorage.getItem("rendir_viaje") === "true";
 
-    const puedeSolicitar = localStorage.setItem("solicitar_viaje") === "true";
-    const puedeRendir = localStorage.setItem("rendir_viaje") === "true";
+      if (!puedeSolicitar) {
+        const btn = document.getElementById("btnPedido");
+        btn.disabled = true;
+        btn.title = "No tenés permisos para solicitar viajes.";
+      }
 
-    // Mostrar u ocultar botones según permisos
-    if (!puedeSolicitar) {
-      document.getElementById("btnPedido").style.display = "none";
-    }
-    if (!puedeRendir) {
-      document.getElementById("btnRendicion").style.display = "none";
-    }
+      if (!puedeRendir) {
+        const btn = document.getElementById("btnRendicion");
+        btn.disabled = true;
+        btn.title = "No tenés permisos para rendir gastos.";
+      }
+    })();
+
 
     function cerrarSesion() {
-      localStorage.removeItem("usuario");
+      localStorage.clear();
       alert("Sesión cerrada");
       location.href = "login.html";
     }

@@ -109,7 +109,7 @@
       </table>
 
       <label for="descripcion">Descripción del viaje:</label>
-      <textarea id="descripcion" name="descripcion" required></textarea>
+      <label id="descripcion" >Descripción</label>
 
       <label for="responsable">Responsable de rendición:</label>
       <select id="responsable" name="responsable" required></select>
@@ -176,6 +176,12 @@
   </div>
 
   <script>
+
+    const puedeSolicitar = localStorage.getItem("solicitar_viaje") === "true";
+    if (!puedeSolicitar) {
+        alert("No tenés permiso para solicitar viajes.");
+        window.location.href = "index.html"; // redirige al menú principal
+    }
     const obraSelect = document.getElementById("obraSelect");
     const personalSelect = document.getElementById("personalSelect");
     const responsableSelect = document.getElementById("responsable");
@@ -273,15 +279,25 @@
         optPasaje.textContent = "Comprar pasaje";
         transporteSelect.appendChild(optPasaje);
 
+        // Ahora podés insertar opciones
         const optSeminarios = document.createElement("option");
-        optSeminarios.value = "Otros";
-        optSeminarios.textContent = "Seminarios y capacitaciones";
-        obraSelect.appendChild(optSeminarios);
+        optSeminarios.value = "1";
+        optSeminarios.textContent = "Viajes comerciales";
+
+        const optReunion = document.createElement("option");
+        optReunion.value = "2";
+        optReunion.textContent = "Capacitaciones y otros motivos";
+
+        // Insertar al inicio
+        obraSelect.insertBefore(optReunion, obraSelect.firstChild);
+        obraSelect.insertBefore(optSeminarios, obraSelect.firstChild);
 
       } catch (err) {
         alert("Error cargando datos: " + err);
       }
     }
+
+    // Cargar los datos al inicio
     cargarDatos();
 
     function actualizarDescripcionAuto() {
@@ -289,7 +305,7 @@
         const nombreObra = obrasSeleccionadas[0].nombre;
         const fechaCompleta = document.getElementById("fechaDesde").value;
         const fechaSolo = fechaCompleta.split("T")[0]; // Solo la fecha (YYYY-MM-DD)
-        document.getElementById("descripcion").value = `Viaje a ${nombreObra} el ${fechaSolo}`;
+        document.getElementById("descripcion").textContent = `Viaje a ${nombreObra} el ${fechaSolo}`;
       }
     }
 
@@ -303,15 +319,25 @@
         row.innerHTML = `<td>${nombre}</td><td><button type="button" onclick="eliminarFila(this, 'obras')">Quitar</button></td>`;
         actualizarDescripcionAuto();
       }
-      if (id === "Otros") {
-        const respuesta = prompt("Ingrese el lugar del seminario o capacitación:");
-        let detalle = document.getElementById("detalle").value;   
-         if (respuesta !== null) {
-            detalle += (detalle ? "\n" : "") +
-            "Seminario o capacitación a realizarse en: " + respuesta;
-          }
-        document.getElementById("detalle").value = detalle;
+      // if (id === "Otros") {
+      //   const respuesta = prompt("Ingrese el lugar del seminario o capacitación:");
+      //   let detalle = document.getElementById("detalle").value;   
+      //    if (respuesta !== null) {
+      //       detalle += (detalle ? "\n" : "") +
+      //       "Seminario o capacitación a realizarse en: " + respuesta;
+      //     }
+      //   document.getElementById("detalle").value = detalle;
+      //   }
+      if (id === "1" || id === "2") {
+        const tipo = id === "1" ? "Viajes comerciales" : "Capacitaciones y otros motivos";
+        const respuesta = prompt(`Ingrese el lugar del viaje`);
+        let detalle = document.getElementById("detalle").value;
+
+        if (respuesta !== null && respuesta.trim() !== "") {
+          detalle += (detalle ? "\n" : "") + `${tipo} a realizarse en: ${respuesta}`;
+          document.getElementById("detalle").value = detalle;
         }
+      }
       }
     obraSelect.addEventListener("change", function() {
       if (obraSelect.value) {
@@ -437,22 +463,22 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
     });
 
     $(document).ready(function() {
-  $('#obraSelect').select2({ width: '100%' });
-  $('#personalSelect').select2({ width: '100%' });
-  $('#responsable').select2({ width: '100%' });
-  
-  // Para obras
-  $('#obraSelect').on('select2:select', function (e) {
-    agregarObra();
-    $('#obraSelect').val('').trigger('change');
-  });
+      $('#obraSelect').select2({ width: '100%' });
+      $('#personalSelect').select2({ width: '100%' });
+      $('#responsable').select2({ width: '100%' });
+      
+      // Para obras
+      $('#obraSelect').on('select2:select', function (e) {
+        agregarObra();
+        $('#obraSelect').val('').trigger('change');
+      });
 
-  // Para personal
-  $('#personalSelect').on('select2:select', function (e) {
-    agregarPersonal();
-    $('#personalSelect').val('').trigger('change');
-  });
-});
+      // Para personal
+      $('#personalSelect').on('select2:select', function (e) {
+        agregarPersonal();
+        $('#personalSelect').val('').trigger('change');
+      });
+    });
 const gastosRendir = document.getElementById("gastosRendir");
 const montoOpciones = document.getElementById("montoOpciones");
 const montoSelect = document.getElementById("montoSelect");
