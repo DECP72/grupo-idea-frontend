@@ -427,9 +427,9 @@ async function enviarRendicion(cerrar) {
     if (file) {
       blob = await procesarImagenDesdeArchivo(file);
       nombreArchivo = `comprobante_${i}.jpg`;
-      formData.append("comprobantes", blob, nombreArchivo);
+      //formData.append("comprobantes", blob, nombreArchivo);
     } else {
-      // Crea un blob vacío o con contenido mínimo
+      //Crear un blob mínimo si no hay archivo nuevo (para que el backend lo reciba igual)
       const canvas = document.createElement("canvas");
       canvas.width = 1;
       canvas.height = 1;
@@ -443,26 +443,30 @@ async function enviarRendicion(cerrar) {
       );
 
       const fakeFile = new File([blobPlaceholder], "placeholder.jpg", { type: "image/jpeg" });
+       formData.append("comprobantes", new Blob(), "");
       blob = await procesarImagenDesdeArchivo(fakeFile);
       nombreArchivo = `comprobante_${i}.jpg`;
-      //formData.append("comprobantes", blob, nombreArchivo);
-      }
-        formData.append("comprobantes", blob, nombreArchivo);
-        formData.append("ids[]", id);
-        formData.append("tipos[]", tipo);
-        formData.append("descripciones[]", descripcion);
-        formData.append("valores[]", valor);
+      //formData.append("comprobantes", new Blob(), "");
     }
 
-    comprobantes.push({
+        comprobantes.push({
       idrendicionDetalle: id ? Number(id) : null,
       tipo,
       importe,
       observaciones,
       archivo: nombreArchivo
     });
-  
 
+    // 📦 Siempre agregar los datos del comprobante
+    formData.append("comprobantes", blob, nombreArchivo);
+    formData.append("ids[]", id);
+    formData.append("tipos[]", tipo);
+    formData.append("descripciones[]", observaciones);
+    formData.append("valores[]", importe.toFixed(2));
+
+  
+  
+  }
   const datos = {
     IdViaje,
     montoRendido: total,
