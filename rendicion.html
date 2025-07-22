@@ -108,6 +108,7 @@
       <table class="table table-bordered mt-3">
         <thead>
           <tr>
+            <th></th>
             <th>Comprobante</th>
             <th>Importe</th>
             <th>Tipo de Gasto</th>
@@ -141,6 +142,12 @@
 let montoOtorgado = 0;
 let tiposGasto = [];
 
+const puedeRendir = localStorage.getItem("rendir_viaje") === "true";
+if (!puedeRendir) {
+  alert("No tenés permiso para rendir gastos.");
+  window.location.href = "index.html";
+}
+
 async function cargarTiposGasto() {
   try {
     const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/viajes_a_rendir/tipos-gasto");
@@ -159,8 +166,9 @@ function agregarFila(data = {}) {
   ).join("");
 
   fila.innerHTML = `
+    <td><input type="hidden" class="comprobante-id" value="${data.idrendicionDetalle || ''}"></td>
     <td>
-      <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/* capture="environment">
+      <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/*" capture="environment">
       <div id="preview-${id}" class="mt-1 text-center"></div>
     </td>
     <td><input type="number" class="form-control importe" step="0.01" value="${data.importe || ''}" required></td>
@@ -270,12 +278,13 @@ document.getElementById("viaje").addEventListener("change", async function () {
   tabla.innerHTML = "";
 
 if (detalle && detalle.comprobantes) {
-  const tabla = document.getElementById("tablaGastos");
-  tabla.innerHTML = "";
+  //const tabla = document.getElementById("tablaGastos");
+  //tabla.innerHTML = "";
 
   detalle.comprobantes.forEach((comp, i) => {
     const fila = document.createElement("tr");
-    const id = `cargado-${i}`;
+    fila.dataset.nombreArchivo = comp.imagenBase64  || '';
+    const id = comp.idrendicionDetalle;
 
     const selectOptions = tiposGasto.map(t =>
       `<option value="${t.id}" ${t.id === comp.idtipogasto ? "selected" : ""}>${t.descripcion}</option>`
@@ -288,7 +297,12 @@ if (detalle && detalle.comprobantes) {
   }
 
     fila.innerHTML = `
-      <td>${imagenPreview}</td>
+      <td><input type="hidden" class="comprobante-id" value="${comp.idrendicionDetalle || ''}">
+          <input type="hidden" class="comprobante-nombre" value="${comp.nombreArchivo || ''}"></td>
+      <td>
+        <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/*" capture="environment">
+        <div id="preview-${id}" class="mt-1 text-center">${imagenPreview}</div>
+      </td>
       <td><input type="number" class="form-control importe" step="0.01" value="${comp.importe}" required></td>
       <td><select class="form-select">${selectOptions}</select></td>
       <td><input type="text" class="form-control" value="${comp.observaciones || ''}"></td>
@@ -306,40 +320,177 @@ if (detalle && detalle.comprobantes) {
   }
 );
 
+async function procesarImagenDesdeArchivo(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !(file instanceof File)) return reject("Archivo inválido");
+    
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      img.onload = function () {
+        // Redimensionar a 800px de ancho manteniendo proporción
+        const maxWidth = 800;
+        const scaleFactor = maxWidth / img.width;
+        const canvas = document.createElement("canvas");
+        canvas.width = maxWidth;
+        canvas.height = img.height * scaleFactor;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // Convertir a Blob en JPEG (alta compresión)
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob);
+          },
+          "image/jpeg",
+          0.7 // calidad entre 0 (máxima compresión) y 1 (mejor calidad)
+        );
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// async function enviarRendicion(cerrar) {
+//   const IdViaje = Number(document.getElementById("viaje").value);
+//   const filas = document.querySelectorAll("#tablaGastos tr");
+//   const comprobantes = [];
+//   const formData = new FormData();
+//   let total = 0;
+
+//   filas.forEach((fila, index) => {
+//     const importe = parseFloat(fila.querySelector("input.form-control.importe").value) || 0;
+//     const tipo = fila.querySelector("select").value;
+//     const observaciones = fila.querySelector("input[type='text']").value;
+//     const fileInput = fila.querySelector("input[type='file']");
+//     const file = fileInput ? fileInput.files[0] : null;
+
+//     total += importe;
+//     comprobantes.push({ tipo, importe, observaciones });
+//     if (file) {
+//       formData.append("comprobantes", file);
+//     };
+//   });
+
+//   formData.append("datos", JSON.stringify({
+//     IdViaje,
+//     montoRendido: total,
+//     diferencia: montoOtorgado - total,
+//     comprobantes,
+//     cerrado: cerrar
+//   }));
+
+//   try {
+//     const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/rendicion", {
+//       method: "POST",
+//       body: formData
+//     });
+//     const json = await res.json();
+//     if (json.ok) {
+//       alert(cerrar ? "Rendición cerrada correctamente." : "Rendición guardada.");
+//       location.reload();
+//     } else {
+//       alert("Error al enviar rendición: " + json.error);
+//     }
+//   } catch (err) {
+//     alert("Error de conexión: " + err.message);
+//   }
+// }
 async function enviarRendicion(cerrar) {
   const IdViaje = Number(document.getElementById("viaje").value);
   const filas = document.querySelectorAll("#tablaGastos tr");
-  const comprobantes = [];
   const formData = new FormData();
   let total = 0;
+  const comprobantes = [];
 
-  filas.forEach((fila, index) => {
+  // Procesar comprobantes
+  for (let i = 0; i < filas.length; i++) {
+    const fila = filas[i];
+    const id = fila.querySelector(".comprobante-id")?.value || null;
     const importe = parseFloat(fila.querySelector("input.form-control.importe").value) || 0;
     const tipo = fila.querySelector("select").value;
-    const observaciones = fila.querySelector("input[type='text']").value;
-    const fileInput = fila.querySelector("input[type='file']");
-    const file = fileInput ? fileInput.files[0] : null;
+    const observaciones = fila.querySelector("input[type='text']").value || "";
+    //const fileInput = fila.querySelector("input[type='file']");
+    //const file = fileInput?.files?.[0] || null;
 
     total += importe;
-    comprobantes.push({ tipo, importe, observaciones });
-    if (file) {
-      formData.append("comprobantes", file);
-    };
-  });
 
-  formData.append("datos", JSON.stringify({
+    const file = fila.querySelector('input[type="file"]').files[0];
+    let nombreArchivo = '';
+    let blob 
+    if (file) {
+      blob = await procesarImagenDesdeArchivo(file);
+      nombreArchivo = `comprobante_${i}.jpg`;
+      formData.append("comprobantes", blob, nombreArchivo);
+    } else {
+      // Crea un blob vacío o con contenido mínimo
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 1, 1);
+
+      const blobPlaceholder = await new Promise(resolve =>
+        canvas.toBlob(resolve, "image/jpeg")
+      );
+
+      const fakeFile = new File([blobPlaceholder], "placeholder.jpg", { type: "image/jpeg" });
+      blob = await procesarImagenDesdeArchivo(fakeFile);
+      nombreArchivo = `comprobante_${i}.jpg`;
+      //formData.append("comprobantes", blob, nombreArchivo);
+      }
+        formData.append("comprobantes", blob, nombreArchivo);
+        formData.append("ids[]", id);
+        formData.append("tipos[]", tipo);
+        formData.append("descripciones[]", descripcion);
+        formData.append("valores[]", valor);
+    }
+
+    comprobantes.push({
+      idrendicionDetalle: id ? Number(id) : null,
+      tipo,
+      importe,
+      observaciones,
+      archivo: nombreArchivo
+    });
+  
+
+  const datos = {
     IdViaje,
     montoRendido: total,
     diferencia: montoOtorgado - total,
     comprobantes,
     cerrado: cerrar
-  }));
+  };
+
+  formData.append("datos", JSON.stringify(datos));
+
+  console.log("Datos a guardar:", {
+    idViaje: IdViaje,
+    totalImporte: total,
+    comprobantes: comprobantes.map(c => ({
+      idrendicionDetalle: c.idrendicionDetalle,
+      tipo: c.tipo,
+      importe: c.importe,
+      observaciones: c.observaciones,
+      archivo: c.archivo
+    }))
+  });
 
   try {
     const res = await fetch("https://grupo-idea-backend-1.onrender.com/api/rendicion", {
       method: "POST",
       body: formData
     });
+
     const json = await res.json();
     if (json.ok) {
       alert(cerrar ? "Rendición cerrada correctamente." : "Rendición guardada.");
