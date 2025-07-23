@@ -87,7 +87,12 @@
 </head>
 <body>
   <header>
-    <h1>Grupo Idea - Rendición de Gastos</h1>
+    <h1 style="  text-shadow:
+    -1px -1px 0 #fff,
+     1px -1px 0 #fff,
+    -1px  1px 0 #fff,
+     1px  1px 0 #fff;
+">Grupo Idea - Rendición de Gastos</h1>
   </header>
 
   <div class="container-fluid px-3 px-md-5 py-3">
@@ -143,11 +148,11 @@
 let montoOtorgado = 0;
 let tiposGasto = [];
 
-const puedeRendir = localStorage.getItem("aceptar_rendicion") === "true";
-if (!puedeRendir) {
-  alert("No tenés permiso para aceptar rendiciones.");
-  window.location.href = "index.html";
-}
+// const puedeRendir = localStorage.getItem("aceptar_rendicion") === "true";
+// if (!puedeRendir) {
+//   alert("No tenés permiso para aceptar rendiciones.");
+//   window.location.href = "index.html";
+// }
 
 async function cargarTiposGasto() {
   try {
@@ -229,7 +234,7 @@ document.getElementById("tablaGastos").addEventListener("input", calcularDiferen
 
 async function cargarViajes() {
   try {
-    const idUsuario = localStorage.getItem("idUsuario");
+    //const idUsuario = localStorage.getItem("idUsuario");
     // console.log("Id de usuario:", idUsuario);
     const res = await fetch(`${API_URL}/viajes_a_rendir/rendido`);
     const viajes = await res.json();
@@ -251,13 +256,13 @@ async function cargarViajes() {
     
     viajes.forEach(v => {
       const opt = document.createElement("option");
-      opt.value = v.id;
-      opt.textContent = `${v.descripcion} (Otorgado: $${v.monto})`;
-      opt.dataset.monto = v.monto;
+      opt.value = v.idrendicion;
+      opt.textContent = `${v.nombre_viaje} (Otorgado: $${v.monto_otorgado})`;
+      opt.dataset.monto = v.monto_otorgado;
       select.appendChild(opt);
     });
     if (viajes.length > 0) {
-      montoOtorgado = parseFloat(viajes[0].monto);
+      montoOtorgado = parseFloat(viajes[0].monto_otorgado);
       document.getElementById("montoOtorgado").textContent = montoOtorgado.toFixed(2);
     }
   } catch (err) {
@@ -270,6 +275,8 @@ document.getElementById("viaje").addEventListener("change", async function () {
   const monto = parseFloat(this.selectedOptions[0].dataset.monto);
   montoOtorgado = monto;
   document.getElementById("montoOtorgado").textContent = monto.toFixed(2);
+  const observaciones = this.observaciones || "";
+  document.getElementById("detalle").value = observaciones;
   calcularDiferencia();
 
   const res = await fetch(`${API_URL}/viajes_a_rendir/a-rendir/detalle?idViaje=${idViaje}`);
@@ -428,7 +435,7 @@ async function enviarRendicion(cerrar) {
     montoRendido: total,
     diferencia: montoOtorgado - total,
     comprobantes,
-    cerrado: cerrar
+    cerrado: false
   };
 
   formData.append("datos", JSON.stringify(datos));
@@ -453,7 +460,7 @@ async function enviarRendicion(cerrar) {
 
     const json = await res.json();
     if (json.ok) {
-      alert(cerrar ? "Rendición cerrada correctamente." : "Rendición guardada.");
+      alert(cerrar ? "Rendición aceptada." : "Rendición guardada.");
       location.reload();
     } else {
       alert("Error al enviar rendición: " + json.error);
@@ -461,7 +468,40 @@ async function enviarRendicion(cerrar) {
   } catch (err) {
     alert("Error de conexión: " + err.message);
   }
+
+  procesarImagenDesdeArchivo(cerrar)
+
+  }
+
+  async function procesarRendicion(tipo) {
+  const detalle = document.getElementById("detalle").value;
+  const idViaje = Number(document.getElementById("viaje").value);
+  const url = tipo ? "/viajes_a_rendir/rendicion_aceptar" : "/viajes_a_rendir/rendicion_rechazar";
+
+  const datos = {
+    idViaje,
+    detalle
+  };
+
+  try {
+    const res = await fetch(`${API_URL}${url}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    });
+
+    const json = await res.json();
+    if (json.ok) {
+      alert(`Rendición ${tipo ? "aceptada" : "lista para modificar"}.`);
+      location.reload();
+    } else {
+      alert(`Error al procesar rendición: ${json.error}`);
+    }
+  } catch (err) {
+    alert("Error de conexión: " + err.message);
+  }
 }
+
 (async () => {
   await cargarTiposGasto();
   await cargarViajes();
