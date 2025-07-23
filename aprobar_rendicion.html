@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Rendición de Gastos - Grupo Idea</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #2b375a;
+    }
+    header {
+      background-color: #2b375a;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    h1, h2 {
+      color: #d61c42;
+    }
+    textarea {
+      width: 100%;
+      padding: 6px;
+      margin-top: 3px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .table-responsive {
+    overflow-x: auto;
+    }
+    .table th, .table td {
+      vertical-align: middle;
+      padding: 6px;
+      white-space: nowrap;
+    }
+    .preview-img {
+    max-width: 100px;
+    height: auto;
+    }
+    .btn-add {
+        margin-top: 10px;
+    }
+
+    .botones-rendicion {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 1.5rem;
+      justify-content: center;
+    }
+
+    .botones-rendicion .btn {
+      flex: 1 1 auto;
+      min-width: 120px;
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 576px) {
+      .botones-rendicion .btn {
+        font-size: 0.85rem;
+        padding: 8px 12x;
+      }
+      h1, h2 {
+        font-size: 1.3rem;
+      }
+      .btn, .form-control, .form-select {
+        font-size: 0.9rem;
+      }
+      .btn {
+       padding: 6px 12px;
+      }
+      .preview-img {
+        max-height: 60px;
+      }
+          .btn {
+        padding: 6px 12px;
+      }
+      .table th, .table td {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Grupo Idea - Rendición de Gastos</h1>
+  </header>
+
+  <div class="container-fluid px-3 px-md-5 py-3">
+    <h2>Formulario de Rendición</h2>
+    <form id="formRendicion">
+      <label for="viaje">Seleccionar viaje a rendir:</label>
+      <select id="viaje" class="form-select" required></select>
+
+      <div class="mt-3">
+        <label><strong>Monto a rendir:</strong> $<span id="montoOtorgado">0.00</span></label>
+      </div>
+
+ <div class="table-responsive"></div>
+      <table class="table table-bordered mt-3">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Comprobante</th>
+            <th>Importe</th>
+            <th>Tipo de Gasto</th>
+            <th>Observaciones</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tablaGastos"></tbody>
+      </table>
+
+      <button type="button" class="btn btn-secondary btn-sm btn-add" onclick="agregarFila()">Agregar gasto</button>
+
+      <div class="mt-3">
+        <label><strong>Diferencia (recibir/entregar):</strong> $<span id="diferencia">0.00</span></label>
+      </div>
+
+      <label for="detalle">Observaciones:</label>
+      <textarea id="detalle" name="detalle"></textarea>
+
+      <div class="botones-rendicion">
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">Volver</button>
+        <button type="button" class="btn btn-danger" onclick="enviarRendicion(false)">Rechachar Rendición</button>
+        <button type="button" class="btn btn-success" onclick="enviarRendicion(true)">Aceptar Rendición</button>
+      </div>
+
+      <div class="mt-3">
+        <p class="text-muted">* Todos los campos son obligatorios.</p>
+      </div>
+
+    </form>
+  </div>
+
+<script src="config.js"></script>
+<script src="login.js"></script>
+<script>
+let montoOtorgado = 0;
+let tiposGasto = [];
+
+const puedeRendir = localStorage.getItem("aceptar_rendicion") === "true";
+if (!puedeRendir) {
+  alert("No tenés permiso para aceptar rendiciones.");
+  window.location.href = "index.html";
+}
+
+async function cargarTiposGasto() {
+  try {
+    const res = await fetch(`${API_URL}/viajes_a_rendir/tipos-gasto`);
+    tiposGasto = await res.json();
+  } catch (err) {
+    alert("Error al cargar tipos de gasto: " + err.message);
+  }
+}
+
+function agregarFila(data = {}) {
+  const fila = document.createElement("tr");
+  const id = Date.now();
+
+  const selectOptions = tiposGasto.map(t =>
+    `<option value="${t.id}" ${data.tipo == t.id ? 'selected' : ''}>${t.descripcion}</option>`
+  ).join("");
+
+  fila.innerHTML = `
+    <td><input type="hidden" class="comprobante-id" value="${data.idrendicionDetalle || ''}"></td>
+    <td>
+      <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/*" capture="environment">
+      <div id="preview-${id}" class="mt-1 text-center"></div>
+    </td>
+    <td><input type="number" class="form-control importe" step="0.01" value="${data.importe || ''}" required></td>
+    <td>
+      <select class="form-select">${selectOptions}</select>
+    </td>
+    <td><input type="text" class="form-control" value="${data.observaciones || ''}"></td>
+    <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
+  `;
+
+  document.getElementById("tablaGastos").appendChild(fila);
+// Manejar carga de imagen
+  const input = fila.querySelector(`#file-${id}`);
+  const preview = fila.querySelector(`#preview-${id}`);
+  input.click();
+
+    // Mostrar mensaje por defecto
+preview.innerHTML = `<span style="color: #888;">(tocar para cargar)</span>`;
+preview.style.cursor = "pointer";
+preview.style.border = "1px dashed #ccc";
+preview.style.padding = "5px";
+preview.style.minHeight = "50px";
+
+preview.addEventListener("click", () => {
+  input.click(); // disparar el file input al hacer clic
+});
+
+input.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.innerHTML = `<img src="${e.target.result}" alt="Comprobante" class="preview-img">`;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML = `<span style="color: red">Archivo inválido</span>`;
+  }
+});
+}
+
+
+function calcularDiferencia() {
+  const importes = document.querySelectorAll(".importe");
+  let total = 0;
+  importes.forEach(i => total += parseFloat(i.value) || 0);
+  const diferencia = montoOtorgado - total;
+  document.getElementById("diferencia").textContent = diferencia.toFixed(2);
+}
+
+document.getElementById("formRendicion").addEventListener("submit", e => {
+  e.preventDefault();
+  enviarRendicion(false);
+});
+
+document.getElementById("tablaGastos").addEventListener("input", calcularDiferencia);
+
+async function cargarViajes() {
+  try {
+    const idUsuario = localStorage.getItem("idUsuario");
+    // console.log("Id de usuario:", idUsuario);
+    const res = await fetch(`${API_URL}/viajes_a_rendir/rendido`);
+    const viajes = await res.json();
+    console.log("Respuesta cruda:", viajes);
+    if (!Array.isArray(viajes)) {
+      console.error("Respuesta inesperada:", viajes);
+      alert("Error inesperado al cargar viajes.");
+      return;
+    }
+    const select = document.getElementById("viaje");
+    select.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "-- Seleccione un viaje --";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    select.appendChild(placeholder);
+    
+    viajes.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = `${v.descripcion} (Otorgado: $${v.monto})`;
+      opt.dataset.monto = v.monto;
+      select.appendChild(opt);
+    });
+    if (viajes.length > 0) {
+      montoOtorgado = parseFloat(viajes[0].monto);
+      document.getElementById("montoOtorgado").textContent = montoOtorgado.toFixed(2);
+    }
+  } catch (err) {
+    alert("Error al cargar viajes: " + err);
+  }
+}
+
+document.getElementById("viaje").addEventListener("change", async function () {
+  const idViaje = this.value;
+  const monto = parseFloat(this.selectedOptions[0].dataset.monto);
+  montoOtorgado = monto;
+  document.getElementById("montoOtorgado").textContent = monto.toFixed(2);
+  calcularDiferencia();
+
+  const res = await fetch(`${API_URL}/viajes_a_rendir/a-rendir/detalle?idViaje=${idViaje}`);
+  const detalle = await res.json();
+
+  const tabla = document.getElementById("tablaGastos");
+  tabla.innerHTML = "";
+
+if (detalle && detalle.comprobantes) {
+  //const tabla = document.getElementById("tablaGastos");
+  //tabla.innerHTML = "";
+
+  detalle.comprobantes.forEach((comp, i) => {
+    const fila = document.createElement("tr");
+    fila.dataset.nombreArchivo = comp.imagenBase64  || '';
+    const id = comp.idrendicionDetalle;
+
+    const selectOptions = tiposGasto.map(t =>
+      `<option value="${t.id}" ${t.id === comp.idtipogasto ? "selected" : ""}>${t.descripcion}</option>`
+    ).join("");
+
+    // Convertir buffer de comprobante en imagen si existe
+  let imagenPreview = `<div class="text-muted">Ya cargado</div>`;
+  if (comp.imagenBase64) {
+    imagenPreview = `<img src="${comp.imagenBase64}" alt="comprobante" class="preview-img">`;
+  }
+
+    fila.innerHTML = `
+      <td><input type="hidden" class="comprobante-id" value="${comp.idrendicionDetalle || ''}">
+          <input type="hidden" class="comprobante-nombre" value="${comp.nombreArchivo || ''}"></td>
+      <td>
+        <input type="file" name="comprobantes" id="file-${id}" style="display:none" accept="image/*" capture="environment">
+        <div id="preview-${id}" class="mt-1 text-center">${imagenPreview}</div>
+      </td>
+      <td><input type="number" class="form-control importe" step="0.01" value="${comp.importe}" required></td>
+      <td><select class="form-select">${selectOptions}</select></td>
+      <td><input type="text" class="form-control" value="${comp.observaciones || ''}"></td>
+      <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); calcularDiferencia()">X</button></td>
+    `;
+
+    tabla.appendChild(fila);
+  });
+
+  calcularDiferencia();
+}
+
+
+    calcularDiferencia();
+  }
+);
+
+async function procesarImagenDesdeArchivo(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !(file instanceof File)) return reject("Archivo inválido");
+    
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      img.onload = function () {
+        // Redimensionar a 800px de ancho manteniendo proporción
+        const maxWidth = 800;
+        const scaleFactor = maxWidth / img.width;
+        const canvas = document.createElement("canvas");
+        canvas.width = maxWidth;
+        canvas.height = img.height * scaleFactor;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // Convertir a Blob en JPEG (alta compresión)
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob);
+          },
+          "image/jpeg",
+          0.7 // calidad entre 0 (máxima compresión) y 1 (mejor calidad)
+        );
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function enviarRendicion(cerrar) {
+  const IdViaje = Number(document.getElementById("viaje").value);
+  const filas = document.querySelectorAll("#tablaGastos tr");
+  const formData = new FormData();
+  let total = 0;
+  const comprobantes = [];
+
+  // Procesar comprobantes
+  for (let i = 0; i < filas.length; i++) {
+    const fila = filas[i];
+    const id = fila.querySelector(".comprobante-id")?.value || null;
+    const importe = parseFloat(fila.querySelector("input.form-control.importe").value) || 0;
+    const tipo = fila.querySelector("select").value;
+    const observaciones = fila.querySelector("input[type='text']").value || "";
+    //const fileInput = fila.querySelector("input[type='file']");
+    //const file = fileInput?.files?.[0] || null;
+
+    total += importe;
+
+    const file = fila.querySelector('input[type="file"]').files[0];
+    let nombreArchivo = '';
+    let blob 
+    if (file) {
+      blob = await procesarImagenDesdeArchivo(file);
+      nombreArchivo = `comprobante_${i}.jpg`;
+      //formData.append("comprobantes", blob, nombreArchivo);
+    } else {
+      //Crear un blob mínimo si no hay archivo nuevo (para que el backend lo reciba igual)
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 1, 1);
+
+      const blobPlaceholder = await new Promise(resolve =>
+        canvas.toBlob(resolve, "image/jpeg")
+      );
+
+      const fakeFile = new File([blobPlaceholder], "placeholder.jpg", { type: "image/jpeg" });
+       formData.append("comprobantes", new Blob(), "");
+      blob = await procesarImagenDesdeArchivo(fakeFile);
+      nombreArchivo = `comprobante_${i}.jpg`;
+      //formData.append("comprobantes", new Blob(), "");
+    }
+
+        comprobantes.push({
+      idrendicionDetalle: id ? Number(id) : null,
+      tipo,
+      importe,
+      observaciones,
+      archivo: nombreArchivo
+    });
+
+    // 📦 Siempre agregar los datos del comprobante
+    formData.append("comprobantes", blob, nombreArchivo);
+    formData.append("ids[]", id);
+    formData.append("tipos[]", tipo);
+    formData.append("descripciones[]", observaciones);
+    formData.append("valores[]", importe.toFixed(2));
+
+  
+  
+  }
+  const datos = {
+    IdViaje,
+    montoRendido: total,
+    diferencia: montoOtorgado - total,
+    comprobantes,
+    cerrado: cerrar
+  };
+
+  formData.append("datos", JSON.stringify(datos));
+
+  console.log("Datos a guardar:", {
+    idViaje: IdViaje,
+    totalImporte: total,
+    comprobantes: comprobantes.map(c => ({
+      idrendicionDetalle: c.idrendicionDetalle,
+      tipo: c.tipo,
+      importe: c.importe,
+      observaciones: c.observaciones,
+      archivo: c.archivo
+    }))
+  });
+
+  try {
+    const res = await fetch(`${API_URL}/rendicion`, {
+      method: "POST",
+      body: formData
+    });
+
+    const json = await res.json();
+    if (json.ok) {
+      alert(cerrar ? "Rendición cerrada correctamente." : "Rendición guardada.");
+      location.reload();
+    } else {
+      alert("Error al enviar rendición: " + json.error);
+    }
+  } catch (err) {
+    alert("Error de conexión: " + err.message);
+  }
+}
+(async () => {
+  await cargarTiposGasto();
+  await cargarViajes();
+})();
+</script>
+</body>
+</html>

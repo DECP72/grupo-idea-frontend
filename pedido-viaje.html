@@ -214,7 +214,7 @@
       }
     });
     transporteSelect.addEventListener("change", function() {
-      if (transporteSelect.value === "pasaje") {
+      if (transporteSelect.value === "2") {
         camposPasaje.style.display = "block";
         origenPasaje.required = true;
         destinoPasaje.required = true;
@@ -270,17 +270,23 @@
           responsableSelect.appendChild(opt);
         });
 
+        const optSin = document.createElement("option");
+        optSin.value = "1";
+        optSin.textContent = "Sin transporte";
+        
+        const optPasaje = document.createElement("option");
+        optPasaje.value = "2";
+        optPasaje.textContent = "Comprar pasaje";
+
+        transporteSelect.appendChild(optPasaje);
+        transporteSelect.appendChild(optSin);
+
         transportes.forEach(t => {
           const opt = document.createElement("option");
           opt.value = t.id;
           opt.textContent = t.nombre;
           transporteSelect.appendChild(opt);
         });
-
-        const optPasaje = document.createElement("option");
-        optPasaje.value = "pasaje";
-        optPasaje.textContent = "Comprar pasaje";
-        transporteSelect.appendChild(optPasaje);
 
         // Ahora podés insertar opciones
         const optSeminarios = document.createElement("option");
@@ -410,7 +416,7 @@ document.getElementById("fechaHasta").addEventListener("change", calcularDias);
 document.getElementById("formViaje").addEventListener("submit", async e => {
   e.preventDefault();
   let detalleFinal = document.getElementById("detalle").value;
-  if (transporteSelect.value === "pasaje") {
+  if (transporteSelect.value === 2 || transporteSelect.value === "pasaje") {
     detalleFinal += (detalleFinal ? "\n" : "") +
       "Pasajes:\n" +
       "Origen: " + origenPasaje.value + "\n" +
@@ -432,7 +438,7 @@ document.getElementById("formViaje").addEventListener("submit", async e => {
     IdTransporte: idTransporte,
     monto: Number(document.getElementById("monto").value),
     IdResponsableRendicion: Number(responsableSelect.value),
-    descripcion: document.getElementById("descripcion").value,
+    descripcion: document.getElementById("descripcion").textContent,
     detalle: detalleFinal,
     IdUsuarioSolicitante: Number(localStorage.getItem("idUsuario")),
     nombreUsuarioSolicitante: localStorage.getItem("usuario"), 
