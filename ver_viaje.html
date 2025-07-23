@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Pedido de Viaje - Grupo Idea</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #2b375a;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2b375a;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    h1, h2 {
+      color: #d61c42;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 6px;
+      margin-top: 3px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    button {
+      background-color: #2b375a;
+      color: white;
+      padding: 8px 12px;
+      margin-top: 15px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background-color: #d61c42;
+    }
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 4px 8px;
+      text-align: left;
+      font-size: 13px;
+    }
+    .inline-fields {
+      display: flex;
+      gap: 10px;
+    }
+    .inline-fields > div {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1style="  text-shadow:
+    -1px -1px 0 #fff,
+     1px -1px 0 #fff,
+    -1px  1px 0 #fff,
+     1px  1px 0 #fff;>Grupo Idea - Viajes Pedidos</h1>
+  </header>
+  <div class="container">
+    <h2>Formulario de Pedido</h2>
+    <form id="formViaje">
+
+      <label for="viaje">Seleccionar viaje a consultar:</label>
+      <select id="viaje" class="form-select" required></select>
+
+      <div class="inline-fields">
+        <div>
+          <label for="fechaDesde">Desde:</label>
+          <input type="datetime-local" id="fechaDesde" name="fechaDesde" required>
+        </div>
+        <div>
+          <label for="fechaHasta">Hasta:</label>
+          <input type="datetime-local" id="fechaHasta" name="fechaHasta" required>
+        </div>
+      </div>
+      
+      <label for="tablaObras">Obras</label>
+      <table id="tablaObras">
+        <thead><tr><th>PI</th><th>Obra</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="inline-fields">
+        <label for="pedido">Pedido por:</label>
+        <input type="text" id="pedido" name="pedidoPor" required></input>
+        <label for="responsable">A rendir por:</label>
+        <input type="text" id="responsable" name="responsable" required></input>
+      </div>
+
+      <label for="tablaPersonal">Personal asignado</label>
+      <table id="tablaPersonal">
+        <thead><tr><th>Codigo</th><th>Nombre</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <label for="transporte">Transporte:</label>
+      <select id="transporte" name="transporte" required></select>
+
+      <div style="margin-top:10px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-weight: normal;">
+          <input type="checkbox" id="hospedaje" name="hospedaje" style="width: 22px; height: 22px; margin-right: 6px;">
+          Solicitar hospedaje
+        </label>
+      </div>
+      <div class="inline-fields">
+        <label for="montoSolicitado">Monto Solicito</label>
+        <input type="text" id="montoSolicitado" name="montoSolicitado">
+        <label for="montoOtorgado">Monto Otorgado</label>
+        <input type="text" id="montoOtorgado" name="montoOtorgado">
+      </div>
+      <label for="detalle">Detalle:</label>
+      <textarea id="detalle" name="detalle"></textarea>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+        <button type="button" onclick="window.location.href='index.html'">Volver</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="login.js"></script>  
+  <script>
+
+    // const obraSelect = document.getElementById("obraSelect");
+    // const personalSelect = document.getElementById("personalSelect");
+    // const responsableSelect = document.getElementById("responsable");
+    // const transporteSelect = document.getElementById("transporte");
+    // const tablaObras = document.getElementById("tablaObras").querySelector("tbody");
+    // const tablaPersonal = document.getElementById("tablaPersonal").querySelector("tbody");
+
+    // const obrasSeleccionadas = [];
+    // const personalSeleccionado = [];
+    
+    // async function cargarDatos() {
+    //   try {
+    //     const [obrasRes, personalRes, responsablesRes, transporteRes] = await Promise.all([
+    //       fetch(`${API_URL}/obras`),
+    //       fetch(`${API_URL}/personal`),
+    //       fetch(`${API_URL}/usuarios`),
+    //       fetch(`${API_URL}/transportes`)
+    //     ]);
+
+    //     const obras = await obrasRes.json();
+    //     const personas = await personalRes.json();
+    //     const responsables = await responsablesRes.json();
+    //     const transportes = await transporteRes.json();
+
+    //     [obraSelect, personalSelect, responsableSelect, transporteSelect].forEach(sel => {
+    //       const opt = document.createElement("option");
+    //       opt.value = "";
+    //       opt.textContent = "-- Seleccione --";
+    //       sel.appendChild(opt);
+    //     });
+
+    //     obras.forEach(o => {
+    //       const opt = document.createElement("option");
+    //       opt.value = o.id;
+    //       opt.textContent = `PI: ${o.id} Obra: ${o.nombre}`;
+    //       obraSelect.appendChild(opt);
+    //     });
+
+    //     personas.forEach(p => {
+    //       const opt = document.createElement("option");
+    //       opt.value = p.id;
+    //       opt.textContent = `Codigo: ${p.id} Personal: ${p.nombre}`;
+    //       personalSelect.appendChild(opt);
+    //     });
+
+    //     responsables.forEach(r => {
+    //       const opt = document.createElement("option");
+    //       opt.value = r.id;
+    //       opt.textContent = r.nombre;
+    //       responsableSelect.appendChild(opt);
+    //     });
+
+    //     } catch (err) {
+    //     alert("Error cargando datos: " + err);
+    //   }
+    // }
+    // // Cargar los datos al inicio
+    // cargarDatos();
+
+  
+    // obraSelect.addEventListener("change", function() {
+    //   if (obraSelect.value) {
+    //     agregarObra();
+    //     // Deja el select vacío y actualiza Select2
+    //     obraSelect.selectedIndex = 0;
+    //     $('#obraSelect').val('').trigger('change');
+    //   }
+    // });
+    
+
+    async function cargarViajes() {
+        try {
+            const res = await fetch(`${API_URL}/viajes`);
+            const viajes = await res.json();
+            console.log("Respuesta cruda:", viajes);
+            if (!Array.isArray(viajes)) {
+            console.error("Respuesta inesperada:", viajes);
+            alert("Error inesperado al cargar viajes.");
+            return;
+            }
+            const select = document.getElementById("viaje");
+            select.innerHTML = "";
+
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "-- Seleccione un viaje --";
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            select.appendChild(placeholder);
+            
+            viajes.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v.idviaje;
+            opt.textContent = `${v.nombre_viaje} (del: $${v.desdefecha})`;
+            opt.dataset.monto = v.monto;
+            select.appendChild(opt);
+            });
+          } catch (err) {
+            alert("Error al cargar viajes: " + err);
+        }
+     }
+
+     document.getElementById("viaje").addEventListener("change", async function () {
+        const idViaje = this.value;
+        document.getElementById("fechaDesde").value = (this.selectedOptions[0].dataset.desdefecha);
+        document.getElementById("fechaHasta").value = (this.selectedOptions[0].dataset.hastafecha);
+        document.getElementById("pedido").value = (this.selectedOptions[0].dataset.pedidopor);
+        document.getElementById("responsable").value = (this.selectedOptions[0].dataset.responsable);
+        document.getElementById("trasporte").value = (this.selectedOptions[0].dataset.denominacion);
+        document.getElementById("hospedaje").checked = (this.selectedOptions[0].dataset.alojamiento === "true");
+        document.getElementById("montoSolicitado").value = (this.selectedOptions[0].dataset.monto_solicitado);
+        document.getElementById("montoOtorgado").value = (this.selectedOptions[0].dataset.monto_otorgado); 
+        document.getElementById("detalle").value = (this.selectedOptions[0].dataset.detalle); 
+        
+         if (!idViaje) return;
+
+        try {
+            const res = await fetch(`${API_URL}/viaje/${idViaje}/detalle`);
+            const data = await res.json();
+
+            if (!data.ok) throw new Error(data.error || "Error desconocido");
+
+            const { obras, personal } = data;
+
+            // 🏗️ Mostrar obras
+            const obrasContainer = document.getElementById("obrasContainer");
+            obrasContainer.innerHTML = obras.map(o => `<li>${o.codigo} - ${o.nombre}</li>`).join("");
+
+            // 👤 Mostrar personal
+            const personalContainer = document.getElementById("personalContainer");
+            personalContainer.innerHTML = personal.map(p => `<li>[${p.id}] ${p.nombre}</li>`).join("");
+
+        } catch (err) {
+            console.error("Error al cargar detalles del viaje:", err);
+            alert("No se pudo cargar obras y personal asociados.");
+        }
+        });
+
+(async () => {
+  await cargarViajes();
+})();
+  </script>
+</body>
+</html>

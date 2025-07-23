@@ -80,6 +80,9 @@
 
     <button id="btnPedido" onclick="location.href='pedido-viaje.html'">Pedido de Viaje</button>
     <button id="btnRendir" onclick="location.href='rendicion.html'">Rendición de Gastos</button>
+    <button id="btnAceptarRendir" style='display: none;' onclick="location.href='aprobar_rendicion.html'">Aprobar Rendicion de Gastos</button>
+    <button id="btnViajes" onclick="location.href='ver_viajes.html'">Ver Viajes</button>
+
     <button onclick="cerrarSesion()">Cerrar Sesión</button>
 
     <div class="usuario">Usuario conectado: <strong id="usuarioNombre">-</strong></div>
@@ -118,6 +121,8 @@
       // Mostrar u ocultar botones según permisos
       const puedeSolicitar = localStorage.getItem("solicitar_viaje") === "true";
       const puedeRendir = localStorage.getItem("rendir_viaje") === "true";
+      const puedeAceptarRendir = localStorage.getItem("aceptar_rendicion") === "true";
+
 
       if (!puedeSolicitar) {
         const btn = document.getElementById("btnPedido");
@@ -129,6 +134,11 @@
         const btn = document.getElementById("btnRendicion");
         btn.disabled = true;
         btn.title = "No tenés permisos para rendir gastos.";
+      }
+
+      if (puedeAceptarRendir) {
+        const btn = document.getElementById("btnAceptarRendir");
+        btn.style.display = "block";
       }
     })();
 
