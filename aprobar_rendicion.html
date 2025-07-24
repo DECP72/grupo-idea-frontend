@@ -453,7 +453,7 @@ async function enviarRendicion(cerrar) {
   });
 
   try {
-    const res = await fetch(`${API_URL}/rendicion`, {
+    const res = await fetch(`${API_URL}/viajes_a_rendir/rendicion`, {
       method: "POST",
       body: formData
     });

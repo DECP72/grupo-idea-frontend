@@ -69,10 +69,25 @@
     }
     .inline-fields {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
+
     .inline-fields > div {
-      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .campo-corto {
+      flex: 0 0 auto; /* ocupa sólo lo que necesita */
+    }
+
+    .campo-flexible {
+      flex: 1; /* se expande para ocupar el resto */
+    }
+
+    .campo-flexible input {
+      width: 100%; /* input rellena su espacio */
     }
   </style>
 </head>
@@ -86,21 +101,26 @@
   </header>
   <div class="container">
     <h2>Formulario de Pedido</h2>
-    <form id="formViaje">
+    <form id="formVerViaje">
 
       <label for="viaje">Seleccionar viaje a consultar:</label>
       <select id="viaje" class="form-select" required></select>
 
       <div class="inline-fields">
-        <div>
-          <label for="fechaDesde">Desde:</label>
-          <input type="datetime-local" id="fechaDesde" name="fechaDesde" required>
+        <div class="campo-corto">
+          <label for="idViaje">Viaje:</label>
+          <input type="text" id="idViaje" name="idviaje" readonly style="width: 6ch;">
         </div>
-        <div>
+        <div class="campo-flexible">
+          <label for="fechaDesde">Desde:</label>
+          <input type="text" id="fechaDesde" name="fechaDesde" readonly>
+        </div>
+        <div class="campo-flexible">
           <label for="fechaHasta">Hasta:</label>
-          <input type="datetime-local" id="fechaHasta" name="fechaHasta" required>
+          <input type="text" id="fechaHasta" name="fechaHasta" readonly>
         </div>
       </div>
+
       
       <label for="tablaObras">Obras</label>
       <table id="tablaObras">
@@ -108,11 +128,14 @@
         <tbody></tbody>
       </table>
 
-      <div class="inline-fields">
-        <label for="pedido">Pedido por:</label>
-        <input type="text" id="pedido" name="pedidoPor" required></input>
-        <label for="responsable">A rendir por:</label>
-        <input type="text" id="responsable" name="responsable" required></input>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <label for="pedido" style="flex: 0 0 auto;">Pedido por:</label>
+        <input type="text" id="pedido" name="pedidoPor" readonly style="height: 1.6em; padding: 4px 8px; margin: 0;">
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <label for="responsable" style="flex: 0 0 auto;">A rendir por:</label>
+        <input type="text" id="responsable" name="responsable" readonly>
       </div>
 
       <label for="tablaPersonal">Personal asignado</label>
@@ -121,26 +144,35 @@
         <tbody></tbody>
       </table>
 
-      <label for="transporte">Transporte:</label>
-      <select id="transporte" name="transporte" required></select>
+      <div style="display: flex; align-items: center; gap: 12px;">
+      <label for="transporte" style="flex: 0 0 auto;">Transporte:</label>
+      <input type="text" id="transporte" name="transporte" readonly>
+      </div>
 
       <div style="margin-top:10px;">
         <label style="display: flex; align-items: center; gap: 6px; font-weight: normal;">
-          <input type="checkbox" id="hospedaje" name="hospedaje" style="width: 22px; height: 22px; margin-right: 6px;">
+          <input type="checkbox" id="hospedaje" name="hospedaje" style="width: 22px; height: 22px; margin-right: 6px;" readonly>
           Solicitar hospedaje
         </label>
       </div>
+
       <div class="inline-fields">
-        <label for="montoSolicitado">Monto Solicito</label>
-        <input type="text" id="montoSolicitado" name="montoSolicitado">
-        <label for="montoOtorgado">Monto Otorgado</label>
-        <input type="text" id="montoOtorgado" name="montoOtorgado">
+        <div class="campo-flexible">
+          <label for="montoSolicitado" style="flex: 0 0 auto;">Monto Solicito</label>
+          <input type="text" id="montoSolicitado" name="montoSolicitado" readonly>
+        </div>
+        <div class="campo-flexible">
+          <label for="montoOtorgado" style="flex: 0 0 auto;">Monto Otorgado</label>
+          <input type="text" id="montoOtorgado" name="montoOtorgado" readonly>
+        </div>
       </div>
+
       <label for="detalle">Detalle:</label>
-      <textarea id="detalle" name="detalle"></textarea>
+      <textarea id="detalle" name="detalle" readonly></textarea>
 
       <div style="display: flex; justify-content: space-between; margin-top: 20px;">
         <button type="button" onclick="window.location.href='index.html'">Volver</button>
+        <button type="submit" id="btnEnviarPedido" style="display: none;">Guardar Cambios</button>
       </div>
     </form>
   </div>
@@ -148,6 +180,28 @@
   <script src="config.js"></script>
   <script src="login.js"></script>  
   <script>
+    const puedeAutorizar = localStorage.getItem("aceptar_rendicion") === "true";
+    const montoInput = document.getElementById("montoOtorgado");
+    const detalleInput = document.getElementById("detalle");
+    const btn = document.getElementById("btnEnviarPedido");
+
+    if (puedeAutorizar) {
+      montoInput.removeAttribute("readonly");
+      detalleInput.removeAttribute("readonly");
+      btn.style.display = "block";
+
+      // Validar que no quede vacío ni en cero
+      montoInput.addEventListener("input", function () {
+        const valor = this.value.trim();
+
+        if (valor === "" || Number(valor) === 0) {
+          this.setCustomValidity("El monto no puede estar vacío ni ser cero.");
+          this.reportValidity(); // muestra el mensaje
+        } else {
+          this.setCustomValidity(""); // limpieza si es válido
+        }
+      });
+    } 
 
     // const obraSelect = document.getElementById("obraSelect");
     // const personalSelect = document.getElementById("personalSelect");
@@ -242,8 +296,16 @@
             viajes.forEach(v => {
             const opt = document.createElement("option");
             opt.value = v.idviaje;
-            opt.textContent = `${v.nombre_viaje} (del: $${v.desdefecha})`;
-            opt.dataset.monto = v.monto;
+            opt.textContent = `${v.nombre_viaje} (pedido por: $${v.nombre})`;
+              opt.dataset.desdefecha = v.desdefecha;
+              opt.dataset.hastafecha = v.hastafecha;
+              opt.dataset.pedidopor = v.nombre;           
+              opt.dataset.responsable = v.responsable;
+              opt.dataset.denominacion = v.denominacion;
+              opt.dataset.alojamiento = v.alojamiento;          
+              opt.dataset.monto_solicitado = v.monto_solicitado;
+              opt.dataset.monto_otorgado = v.monto_otorgado;
+              opt.dataset.detalle = v.detalle;
             select.appendChild(opt);
             });
           } catch (err) {
@@ -253,16 +315,19 @@
 
      document.getElementById("viaje").addEventListener("change", async function () {
         const idViaje = this.value;
-        document.getElementById("fechaDesde").value = (this.selectedOptions[0].dataset.desdefecha);
-        document.getElementById("fechaHasta").value = (this.selectedOptions[0].dataset.hastafecha);
-        document.getElementById("pedido").value = (this.selectedOptions[0].dataset.pedidopor);
-        document.getElementById("responsable").value = (this.selectedOptions[0].dataset.responsable);
-        document.getElementById("trasporte").value = (this.selectedOptions[0].dataset.denominacion);
-        document.getElementById("hospedaje").checked = (this.selectedOptions[0].dataset.alojamiento === "true");
-        document.getElementById("montoSolicitado").value = (this.selectedOptions[0].dataset.monto_solicitado);
-        document.getElementById("montoOtorgado").value = (this.selectedOptions[0].dataset.monto_otorgado); 
-        document.getElementById("detalle").value = (this.selectedOptions[0].dataset.detalle); 
-        
+        const dataset = this.selectedOptions[0].dataset;
+
+        document.getElementById("idViaje").value = idViaje;
+        document.getElementById("fechaDesde").value = FechaFormatoArgentino(dataset.desdefecha || "");
+        document.getElementById("fechaHasta").value = FechaFormatoArgentino(dataset.hastafecha || "");
+        document.getElementById("pedido").value = dataset.pedidopor || "";
+        document.getElementById("responsable").value = dataset.responsable || "";
+        document.getElementById("transporte").value = dataset.denominacion || "";
+        document.getElementById("hospedaje").checked = dataset.alojamiento === "true";
+        document.getElementById("montoSolicitado").value = dataset.monto_solicitado || "";
+        document.getElementById("montoOtorgado").value = dataset.monto_otorgado || "";
+        document.getElementById("detalle").value = dataset.detalle || "";
+
          if (!idViaje) return;
 
         try {
@@ -285,6 +350,41 @@
             console.error("Error al cargar detalles del viaje:", err);
             alert("No se pudo cargar obras y personal asociados.");
         }
+        });
+
+        function FechaFormatoArgentino(fecha) {
+            const opciones = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false};
+            return new Intl.DateTimeFormat('es-AR', opciones).format(new Date(fecha));
+        }
+
+        document.getElementById("formPedido").addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const body = {
+            idviaje: document.getElementById("idViaje").value.trim(),
+            monto_otorgado: document.getElementById("montoOtorgado").value.trim(),
+            detalle: document.getElementById("detalle").value.trim()
+          };
+
+          try {
+            const res = await fetch(`${API_URL}/viajes_a_rendir/pedido/enviar`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(body)
+            });
+
+            const result = await res.json();
+            if (result.ok) {
+              alert("Pedido enviado exitosamente 🎉");
+            } else {
+              throw new Error(result.error || "Error inesperado");
+            }
+          } catch (err) {
+            console.error("Error al enviar pedido:", err);
+            alert("No se pudo actualizar el pedido.");
+          }
         });
 
 (async () => {
