@@ -200,46 +200,30 @@
   <script src="config.js"></script>
   <script src="login.js"></script>  
   <script>
+      
+    const puedeAutorizar = localStorage.getItem("aceptar_rendicion") === "true";
+    const montoInput = document.getElementById("montoOtorgado");
+    const detalleInput = document.getElementById("detalle");
+    const btn = document.getElementById("btnEnviarPedido");
 
-    async function cargarViajes() {
-        const loader = document.getElementById("viajesLoader");
-        loader.style.display = "block"; // 👀 Mostrar loader
-        try {
-            const res = await fetch(`${API_URL}/viajes`);
-            const viajes = await res.json();
+    if (puedeAutorizar) {
+      montoInput.removeAttribute("readonly");
+      detalleInput.removeAttribute("readonly");
+      btn.style.display = "block";
 
-            //Validacion y renderizado de viajes
-            const select = document.getElementById("viaje");
-            select.innerHTML = "";
+      // Validar que no quede vacío ni en cero
+      montoInput.addEventListener("input", function () {
+        const valor = this.value.trim();
 
-            const placeholder = document.createElement("option");
-            placeholder.value = "";
-            placeholder.textContent = "-- Seleccione un viaje --";
-            placeholder.disabled = true;
-            placeholder.selected = true;
-            select.appendChild(placeholder);
-            
-            viajes.forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v.idviaje;
-            opt.textContent = `${v.nombre_viaje} (pedido por: $${v.nombre})`;
-              opt.dataset.desdefecha = v.desdefecha;
-              opt.dataset.hastafecha = v.hastafecha;
-              opt.dataset.pedidopor = v.nombre;           
-              opt.dataset.responsable = v.responsable;
-              opt.dataset.denominacion = v.denominacion;
-              opt.dataset.alojamiento = v.alojamiento;          
-              opt.dataset.monto_solicitado = v.monto_solicitado;
-              opt.dataset.monto_otorgado = v.monto_otorgado;
-              opt.dataset.detalle = v.detalle;
-            select.appendChild(opt);
-            });
-          } catch (err) {
-            alert("Error al cargar viajes: " + err);
-          } finally {
-            loader.style.display = "none"; // ✅ Ocultar loader
-          }
-     }
+        if (valor === "" || Number(valor) === 0) {
+          this.setCustomValidity("El monto no puede estar vacío ni ser cero.");
+          this.reportValidity(); // muestra el mensaje
+        } else {
+          this.setCustomValidity(""); // limpieza si es válido
+        }
+      });
+    } 
+
 
      document.getElementById("viaje").addEventListener("change", async function () {
         const loader = document.getElementById("viajesLoader");
