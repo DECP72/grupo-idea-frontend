@@ -89,6 +89,22 @@
     .campo-flexible input {
       width: 100%; /* input rellena su espacio */
     }
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #ccc;
+      border-top: 3px solid #007bff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
   </style>
 </head>
 <body>
@@ -102,6 +118,10 @@
   <div class="container">
     <h2>Formulario de Pedido</h2>
     <form id="formVerViaje">
+
+      <div id="viajesLoader" style="display: none; text-align: center; margin: 1em 0;">
+        <span class="spinner"></span> Cargando viajes...
+      </div>
 
       <label for="viaje">Seleccionar viaje a consultar:</label>
       <select id="viaje" class="form-select" required></select>
@@ -130,7 +150,7 @@
 
       <div style="display: flex; align-items: center; gap: 12px;">
         <label for="pedido" style="flex: 0 0 auto;">Pedido por:</label>
-        <input type="text" id="pedido" name="pedidoPor" readonly style="height: 1.6em; padding: 4px 8px; margin: 0;">
+        <input type="text" id="pedido" name="pedidoPor" readonly >
       </div>
 
       <div style="display: flex; align-items: center; gap: 12px;">
@@ -180,109 +200,15 @@
   <script src="config.js"></script>
   <script src="login.js"></script>  
   <script>
-    const puedeAutorizar = localStorage.getItem("aceptar_rendicion") === "true";
-    const montoInput = document.getElementById("montoOtorgado");
-    const detalleInput = document.getElementById("detalle");
-    const btn = document.getElementById("btnEnviarPedido");
-
-    if (puedeAutorizar) {
-      montoInput.removeAttribute("readonly");
-      detalleInput.removeAttribute("readonly");
-      btn.style.display = "block";
-
-      // Validar que no quede vacío ni en cero
-      montoInput.addEventListener("input", function () {
-        const valor = this.value.trim();
-
-        if (valor === "" || Number(valor) === 0) {
-          this.setCustomValidity("El monto no puede estar vacío ni ser cero.");
-          this.reportValidity(); // muestra el mensaje
-        } else {
-          this.setCustomValidity(""); // limpieza si es válido
-        }
-      });
-    } 
-
-    // const obraSelect = document.getElementById("obraSelect");
-    // const personalSelect = document.getElementById("personalSelect");
-    // const responsableSelect = document.getElementById("responsable");
-    // const transporteSelect = document.getElementById("transporte");
-    // const tablaObras = document.getElementById("tablaObras").querySelector("tbody");
-    // const tablaPersonal = document.getElementById("tablaPersonal").querySelector("tbody");
-
-    // const obrasSeleccionadas = [];
-    // const personalSeleccionado = [];
-    
-    // async function cargarDatos() {
-    //   try {
-    //     const [obrasRes, personalRes, responsablesRes, transporteRes] = await Promise.all([
-    //       fetch(`${API_URL}/obras`),
-    //       fetch(`${API_URL}/personal`),
-    //       fetch(`${API_URL}/usuarios`),
-    //       fetch(`${API_URL}/transportes`)
-    //     ]);
-
-    //     const obras = await obrasRes.json();
-    //     const personas = await personalRes.json();
-    //     const responsables = await responsablesRes.json();
-    //     const transportes = await transporteRes.json();
-
-    //     [obraSelect, personalSelect, responsableSelect, transporteSelect].forEach(sel => {
-    //       const opt = document.createElement("option");
-    //       opt.value = "";
-    //       opt.textContent = "-- Seleccione --";
-    //       sel.appendChild(opt);
-    //     });
-
-    //     obras.forEach(o => {
-    //       const opt = document.createElement("option");
-    //       opt.value = o.id;
-    //       opt.textContent = `PI: ${o.id} Obra: ${o.nombre}`;
-    //       obraSelect.appendChild(opt);
-    //     });
-
-    //     personas.forEach(p => {
-    //       const opt = document.createElement("option");
-    //       opt.value = p.id;
-    //       opt.textContent = `Codigo: ${p.id} Personal: ${p.nombre}`;
-    //       personalSelect.appendChild(opt);
-    //     });
-
-    //     responsables.forEach(r => {
-    //       const opt = document.createElement("option");
-    //       opt.value = r.id;
-    //       opt.textContent = r.nombre;
-    //       responsableSelect.appendChild(opt);
-    //     });
-
-    //     } catch (err) {
-    //     alert("Error cargando datos: " + err);
-    //   }
-    // }
-    // // Cargar los datos al inicio
-    // cargarDatos();
-
-  
-    // obraSelect.addEventListener("change", function() {
-    //   if (obraSelect.value) {
-    //     agregarObra();
-    //     // Deja el select vacío y actualiza Select2
-    //     obraSelect.selectedIndex = 0;
-    //     $('#obraSelect').val('').trigger('change');
-    //   }
-    // });
-    
 
     async function cargarViajes() {
+        const loader = document.getElementById("viajesLoader");
+        loader.style.display = "block"; // 👀 Mostrar loader
         try {
             const res = await fetch(`${API_URL}/viajes`);
             const viajes = await res.json();
-            console.log("Respuesta cruda:", viajes);
-            if (!Array.isArray(viajes)) {
-            console.error("Respuesta inesperada:", viajes);
-            alert("Error inesperado al cargar viajes.");
-            return;
-            }
+
+            //Validacion y renderizado de viajes
             const select = document.getElementById("viaje");
             select.innerHTML = "";
 
@@ -310,10 +236,17 @@
             });
           } catch (err) {
             alert("Error al cargar viajes: " + err);
-        }
+          } finally {
+            loader.style.display = "none"; // ✅ Ocultar loader
+          }
      }
 
      document.getElementById("viaje").addEventListener("change", async function () {
+        const loader = document.getElementById("viajesLoader");
+        // Mostrar el loader
+        loader.style.display = "block";
+        loader.innerHTML = `<span class="spinner"></span> Casi listo cargando detalle...`;
+              
         const idViaje = this.value;
         const dataset = this.selectedOptions[0].dataset;
 
@@ -331,7 +264,7 @@
          if (!idViaje) return;
 
         try {
-            const res = await fetch(`${API_URL}/viaje/${idViaje}/detalle`);
+            const res = await fetch(`${API_URL}/viajes_a_rendir/viaje/${idViaje}/detalle`);
             const data = await res.json();
 
             if (!data.ok) throw new Error(data.error || "Error desconocido");
@@ -339,17 +272,33 @@
             const { obras, personal } = data;
 
             // 🏗️ Mostrar obras
-            const obrasContainer = document.getElementById("obrasContainer");
-            obrasContainer.innerHTML = obras.map(o => `<li>${o.codigo} - ${o.nombre}</li>`).join("");
-
+              const tbodyObra = document.querySelector("#tablaObras tbody");
+              if (Array.isArray(obras)) {
+                tbodyObra.innerHTML = obras.map(o => `
+                  <tr>
+                    <td>${o.pi}</td>
+                    <td>${o.obra}</td>
+                  </tr>
+                `).join("");
+              }
             // 👤 Mostrar personal
-            const personalContainer = document.getElementById("personalContainer");
-            personalContainer.innerHTML = personal.map(p => `<li>[${p.id}] ${p.nombre}</li>`).join("");
+
+            const tbodyPersonal = document.querySelector("#tablaPersonal tbody");
+            if (Array.isArray(personal)) {
+              tbodyPersonal.innerHTML = personal.map(p => `
+                <tr>
+                  <td>${p.codigo}</td>
+                  <td>${p.nombre}</td>
+                </tr>
+              `).join("");
+            }
 
         } catch (err) {
             console.error("Error al cargar detalles del viaje:", err);
             alert("No se pudo cargar obras y personal asociados.");
-        }
+        } finally {
+            loader.style.display = "none"; // ✅ Ocultar loader
+          }
         });
 
         function FechaFormatoArgentino(fecha) {
@@ -357,7 +306,7 @@
             return new Intl.DateTimeFormat('es-AR', opciones).format(new Date(fecha));
         }
 
-        document.getElementById("formPedido").addEventListener("submit", async function (e) {
+        document.getElementById("formVerViaje").addEventListener("submit", async function (e) {
           e.preventDefault();
 
           const body = {
